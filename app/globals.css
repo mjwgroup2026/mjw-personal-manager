@@ -112,6 +112,7 @@ kbd { padding: 3px 6px; border: 1px solid var(--line); border-radius: 5px; color
 .task-copy span { display: flex; align-items: center; gap: 7px; margin-top: 5px; color: var(--muted); font-size: 9px; }
 .task-copy i { width: 2px; height: 2px; border-radius: 50%; background: var(--muted); }
 .priority { padding: 5px 8px; border-radius: 7px; font-size: 8px; font-weight: 750; text-transform: capitalize; }
+.priority.critical { color: #7a1515; background: #fde0e0; }
 .priority.high { color: #ad503a; background: #f9e3dc; }
 .priority.medium { color: #755f8f; background: #eee8f5; }
 .priority.low { color: #4f7864; background: #e2eee5; }

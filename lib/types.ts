@@ -1,4 +1,4 @@
-export type Priority = "high" | "medium" | "low";
+export type Priority = "critical" | "high" | "medium" | "low";
 
 export type Task = {
   id: number;
@@ -7,6 +7,9 @@ export type Task = {
   time: string;
   priority: Priority;
   done: boolean;
+  dueDate?: string;       // ISO date YYYY-MM-DD
+  scheduledDate?: string; // ISO date YYYY-MM-DD
+  nextAction?: string;
 };
 
 export type Habit = {

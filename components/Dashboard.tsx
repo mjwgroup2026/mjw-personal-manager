@@ -32,7 +32,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import type { Habit, JournalEntry, MoneyData, Person, Project, Task } from "@/lib/types";
+import type { Habit, JournalEntry, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
 import { useUserData } from "@/lib/useUserData";
 import MjwLogo from "./MjwLogo";
 import { HabitsSection } from "./sections/HabitsSection";
@@ -44,9 +44,20 @@ import { SettingsSection } from "./sections/SettingsSection";
 import { TasksSection } from "./sections/TasksSection";
 
 type View = "today" | "tasks" | "habits" | "journal" | "money" | "projects" | "people" | "settings";
+type QuickAddType = "task" | "habit" | "journal" | "money" | "project" | "person";
+type QuickFields = {
+  title: string; area: string; time: string; priority: Priority; dueDate: string;
+  detail: string; color: string; note: string; amount: string; category: string;
+  description: string; relation: string; notes: string;
+};
+const DEFAULT_QUICK_FIELDS: QuickFields = {
+  title: "", area: "Personal", time: "15 min", priority: "medium", dueDate: "",
+  detail: "", color: "coral", note: "", amount: "", category: "Groceries",
+  description: "", relation: "", notes: "",
+};
 
 const DEFAULT_TASKS: Task[] = [
-  { id: 1, title: "Plan the week ahead", area: "Personal", time: "15 min", priority: "high", done: false },
+  { id: 1, title: "Plan the week ahead", area: "Personal", time: "15 min", priority: "high", done: false, dueDate: new Date().toISOString().split("T")[0], nextAction: "Open calendar and block focus time" },
   { id: 2, title: "Review monthly spending", area: "Money", time: "20 min", priority: "medium", done: false },
   { id: 3, title: "Send project follow-up", area: "Work", time: "10 min", priority: "medium", done: true },
   { id: 4, title: "Book annual check-up", area: "Health", time: "5 min", priority: "low", done: false },
@@ -117,7 +128,8 @@ export default function Dashboard() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [newTask, setNewTask] = useState("");
+  const [quickAddType, setQuickAddType] = useState<QuickAddType>("task");
+  const [quickFields, setQuickFields] = useState<QuickFields>(DEFAULT_QUICK_FIELDS);
   const [toast, setToast] = useState("");
 
   // Keep display name in sync with session name on first load if not yet customised
@@ -152,11 +164,57 @@ export default function Dashboard() {
   function selectView(next: View) { setView(next); setSidebarOpen(false); }
   function showToast(msg: string) { setToast(msg); }
 
-  function addQuickTask(e: FormEvent) {
+  function closeQuickAdd() {
+    setQuickAddOpen(false);
+    setQuickFields(DEFAULT_QUICK_FIELDS);
+    setQuickAddType("task");
+  }
+
+  function handleQuickAdd(e: FormEvent) {
     e.preventDefault();
-    if (!newTask.trim()) return;
-    setTasks([...tasks, { id: Date.now(), title: newTask.trim(), area: "Personal", time: "10 min", priority: "medium", done: false }]);
-    setNewTask(""); setQuickAddOpen(false); showToast("Task added");
+    const today = new Date().toISOString().split("T")[0];
+    const qf = quickFields;
+    switch (quickAddType) {
+      case "task":
+        if (!qf.title.trim()) return;
+        setTasks([...tasks, { id: Date.now(), title: qf.title.trim(), area: qf.area, time: qf.time, priority: qf.priority, done: false, dueDate: qf.dueDate || undefined }]);
+        showToast("Task added");
+        break;
+      case "habit":
+        if (!qf.title.trim()) return;
+        setHabits([...habits, { id: Date.now(), name: qf.title.trim(), detail: qf.detail, goal: "", done: false, color: qf.color, streak: 0 }]);
+        showToast("Habit added");
+        break;
+      case "journal": {
+        if (!qf.note.trim()) return;
+        const existing = journal.find((e) => e.date === today);
+        if (existing) {
+          setJournal(journal.map((e) => e.date === today ? { ...e, content: e.content + "\n\n" + qf.note.trim() } : e));
+        } else {
+          setJournal([...journal, { id: Date.now(), date: today, content: qf.note.trim(), mood: "" }]);
+        }
+        showToast("Journal note saved");
+        break;
+      }
+      case "money":
+        if (!qf.title.trim()) return;
+        setMoney({ ...money, expenses: [...money.expenses, { id: Date.now(), name: qf.title.trim(), amount: parseFloat(qf.amount) || 0, category: qf.category, date: today, recurring: false }] });
+        showToast("Expense added");
+        break;
+      case "project":
+        if (!qf.title.trim()) return;
+        setProjects([...projects, { id: Date.now(), name: qf.title.trim(), description: qf.description, color: "coral", status: "active", tasks: [], goals: [] }]);
+        showToast("Project added");
+        break;
+      case "person": {
+        if (!qf.title.trim()) return;
+        const initials = qf.title.trim().split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+        setPeople([...people, { id: Date.now(), name: qf.title.trim(), initials, relation: qf.relation, phone: "", email: "", birthday: "", notes: qf.notes, color: "blue", reminders: [] }]);
+        showToast("Person added");
+        break;
+      }
+    }
+    closeQuickAdd();
   }
 
   function resetAllData() {
@@ -274,23 +332,109 @@ export default function Dashboard() {
       </main>
 
       {quickAddOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setQuickAddOpen(false)}>
-          <form className="modal" onSubmit={addQuickTask} onMouseDown={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop" role="presentation" onMouseDown={closeQuickAdd}>
+          <form className="modal" onSubmit={handleQuickAdd} onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(580px, 100%)" }}>
             <div className="modal-head">
-              <div><span className="eyebrow">Quick capture</span><h2>Add something to your day</h2></div>
-              <button type="button" className="icon-btn" onClick={() => setQuickAddOpen(false)}><X size={19} /></button>
+              <div><span className="eyebrow">Quick capture</span><h2>Add to your day</h2></div>
+              <button type="button" className="icon-btn" onClick={closeQuickAdd}><X size={19} /></button>
             </div>
-            <label htmlFor="qt">What needs doing?</label>
-            <input id="qt" autoFocus value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="e.g. Call the dentist"
-              style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginTop: 8 }} />
-            <div className="modal-options">
-              <button type="button"><CalendarDays size={16} />Today</button>
-              <button type="button"><Target size={16} />Personal</button>
-              <button type="button"><Clock3 size={16} />10 min</button>
+
+            {/* Type tabs */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 22, flexWrap: "wrap" }}>
+              {([
+                { type: "task" as const, label: "Task", Icon: ListTodo },
+                { type: "habit" as const, label: "Habit", Icon: Flame },
+                { type: "journal" as const, label: "Journal", Icon: BookOpen },
+                { type: "money" as const, label: "Money", Icon: WalletCards },
+                { type: "project" as const, label: "Project", Icon: FolderKanban },
+                { type: "person" as const, label: "Person", Icon: Users },
+              ]).map(({ type, label, Icon }) => (
+                <button key={type} type="button" onClick={() => { setQuickAddType(type); setQuickFields(DEFAULT_QUICK_FIELDS); }}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 13px", borderRadius: 9, border: "1px solid var(--line)", background: quickAddType === type ? "var(--accent)" : "var(--surface-2)", color: quickAddType === type ? "white" : "var(--muted)", fontSize: 11, fontWeight: 680, cursor: "pointer" }}>
+                  <Icon size={13} />{label}
+                </button>
+              ))}
             </div>
+
+            {/* Task */}
+            {quickAddType === "task" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>WHAT NEEDS DOING?</label>
+              <input autoFocus value={quickFields.title} onChange={(e) => setQuickFields((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Call the dentist"
+                style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginBottom: 14 }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+                {[
+                  { label: "AREA", content: <select value={quickFields.area} onChange={(e) => setQuickFields((f) => ({ ...f, area: e.target.value }))} style={{ width: "100%", height: 40, padding: "0 8px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }}>{["Personal","Work","Health","Money","Home","Learning","Other"].map((a) => <option key={a}>{a}</option>)}</select> },
+                  { label: "TIME", content: <input value={quickFields.time} onChange={(e) => setQuickFields((f) => ({ ...f, time: e.target.value }))} placeholder="15 min" style={{ width: "100%", height: 40, padding: "0 8px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }} /> },
+                  { label: "PRIORITY", content: <select value={quickFields.priority} onChange={(e) => setQuickFields((f) => ({ ...f, priority: e.target.value as Priority }))} style={{ width: "100%", height: 40, padding: "0 8px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }}>{["critical","high","medium","low"].map((p) => <option key={p}>{p}</option>)}</select> },
+                  { label: "DUE DATE", content: <input type="date" value={quickFields.dueDate} onChange={(e) => setQuickFields((f) => ({ ...f, dueDate: e.target.value }))} style={{ width: "100%", height: 40, padding: "0 8px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }} /> },
+                ].map(({ label, content }) => (
+                  <div key={label}><label style={{ display: "block", marginBottom: 5, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>{label}</label>{content}</div>
+                ))}
+              </div>
+            </>)}
+
+            {/* Habit */}
+            {quickAddType === "habit" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>HABIT NAME</label>
+              <input autoFocus value={quickFields.title} onChange={(e) => setQuickFields((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Morning walk"
+                style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginBottom: 12 }} />
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>DETAIL</label>
+              <input value={quickFields.detail} onChange={(e) => setQuickFields((f) => ({ ...f, detail: e.target.value }))} placeholder="e.g. 30 min"
+                style={{ width: "100%", height: 44, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)" }} />
+            </>)}
+
+            {/* Journal */}
+            {quickAddType === "journal" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>WHAT'S ON YOUR MIND?</label>
+              <textarea autoFocus value={quickFields.note} onChange={(e) => setQuickFields((f) => ({ ...f, note: e.target.value }))} placeholder="A thought, observation, or reflection..."
+                style={{ width: "100%", height: 140, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", resize: "vertical", fontFamily: "inherit", fontSize: 13, lineHeight: 1.6 }} />
+              <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--muted)" }}>Appended to today's journal entry.</p>
+            </>)}
+
+            {/* Money */}
+            {quickAddType === "money" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>DESCRIPTION</label>
+              <input autoFocus value={quickFields.title} onChange={(e) => setQuickFields((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Grocery run"
+                style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginBottom: 12 }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div><label style={{ display: "block", marginBottom: 5, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>AMOUNT (R)</label>
+                  <input type="number" min="0" step="0.01" value={quickFields.amount} onChange={(e) => setQuickFields((f) => ({ ...f, amount: e.target.value }))} placeholder="0.00"
+                    style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }} /></div>
+                <div><label style={{ display: "block", marginBottom: 5, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>CATEGORY</label>
+                  <select value={quickFields.category} onChange={(e) => setQuickFields((f) => ({ ...f, category: e.target.value }))} style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }}>
+                    {["Groceries","Rent","Utilities","Transport","Health","Entertainment","Subscription","Clothing","Other"].map((c) => <option key={c}>{c}</option>)}
+                  </select></div>
+              </div>
+            </>)}
+
+            {/* Project */}
+            {quickAddType === "project" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>PROJECT NAME</label>
+              <input autoFocus value={quickFields.title} onChange={(e) => setQuickFields((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Home renovation"
+                style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginBottom: 12 }} />
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>DESCRIPTION</label>
+              <input value={quickFields.description} onChange={(e) => setQuickFields((f) => ({ ...f, description: e.target.value }))} placeholder="What is this project about?"
+                style={{ width: "100%", height: 44, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)" }} />
+            </>)}
+
+            {/* Person */}
+            {quickAddType === "person" && (<>
+              <label style={{ display: "block", marginBottom: 6, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>NAME</label>
+              <input autoFocus value={quickFields.title} onChange={(e) => setQuickFields((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Sarah Johnson"
+                style={{ width: "100%", height: 50, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, outline: "none", color: "var(--text)", background: "var(--surface-2)", marginBottom: 12 }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div><label style={{ display: "block", marginBottom: 5, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>RELATION</label>
+                  <input value={quickFields.relation} onChange={(e) => setQuickFields((f) => ({ ...f, relation: e.target.value }))} placeholder="e.g. Friend, Work"
+                    style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }} /></div>
+                <div><label style={{ display: "block", marginBottom: 5, color: "var(--muted)", fontSize: 10, fontWeight: 700 }}>NOTES</label>
+                  <input value={quickFields.notes} onChange={(e) => setQuickFields((f) => ({ ...f, notes: e.target.value }))} placeholder="e.g. Follow up this week"
+                    style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface-2)", color: "var(--text)", fontSize: 12 }} /></div>
+              </div>
+            </>)}
+
             <div className="modal-actions">
-              <button type="button" className="secondary-btn" onClick={() => setQuickAddOpen(false)}>Cancel</button>
-              <button className="primary-btn" type="submit">Add task</button>
+              <button type="button" className="secondary-btn" onClick={closeQuickAdd}>Cancel</button>
+              <button className="primary-btn" type="submit" style={{ textTransform: "capitalize" }}>Add {quickAddType}</button>
             </div>
           </form>
         </div>
@@ -322,7 +466,7 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
   const doneHabits_list = habits.filter((h) => h.done);
   const missedHabits = habits.filter((h) => !h.done);
 
-  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   const sortedOpen = [...openTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   const top3 = sortedOpen.slice(0, 3);
   const top3Ids = new Set(top3.map((t) => t.id));
@@ -403,7 +547,7 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
           <div className="signal-focus-grid">
             {top3.map((task, i) => (
               <div key={task.id} style={{ padding: "14px 16px", borderRadius: 14, background: "var(--surface-2)", border: "1px solid var(--line)", position: "relative", opacity: task.done ? 0.5 : 1 }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, borderRadius: "14px 14px 0 0", background: task.priority === "high" ? "var(--accent)" : task.priority === "medium" ? "#9c8db2" : "var(--green)" }} />
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, borderRadius: "14px 14px 0 0", background: task.priority === "critical" ? "#8b1a1a" : task.priority === "high" ? "var(--accent)" : task.priority === "medium" ? "#9c8db2" : "var(--green)" }} />
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
                   <span style={{ fontSize: 9, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>#{i + 1} · {task.area}</span>
                   <button onClick={() => onToggleTask(task.id)} style={{ width: 20, height: 20, display: "grid", placeItems: "center", padding: 0, border: task.done ? "none" : "1.5px solid #c8cac5", borderRadius: 6, background: task.done ? "var(--green)" : "transparent", color: "white", cursor: "pointer", flexShrink: 0 }}>
@@ -411,9 +555,10 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
                   </button>
                 </div>
                 <strong style={{ display: "block", fontSize: 12, fontWeight: 650, lineHeight: 1.4, marginBottom: 8, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--muted)" : "var(--text)" }}>{task.title}</strong>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                   <span className={`priority ${task.priority}`}>{task.priority}</span>
                   <span style={{ color: "var(--muted)", fontSize: 9 }}>{task.time}</span>
+                  {task.dueDate && <span style={{ fontSize: 9, color: "var(--accent-dark)", fontWeight: 700 }}>Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</span>}
                 </div>
               </div>
             ))}
@@ -449,13 +594,25 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
             <p style={{ color: "var(--muted)", fontSize: 12, margin: "4px 0 0" }}>No deferred items.</p>
           ) : (
             <div style={{ marginTop: 4 }}>
-              {canWait.map((task) => (
-                <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
-                  <span style={{ fontSize: 8, padding: "3px 7px", borderRadius: 6, background: "var(--surface-2)", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, flexShrink: 0 }}>{task.priority}</span>
-                  <span style={{ fontSize: 12, color: "var(--muted)", flex: 1 }}>{task.title}</span>
-                  <span style={{ fontSize: 9, color: "var(--muted)", flexShrink: 0 }}>{task.time}</span>
-                </div>
-              ))}
+              {canWait.map((task) => {
+                const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+                const suggestedDate = task.dueDate
+                  ? new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))
+                  : new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(tomorrow);
+                const reason = task.priority === "low" ? "Low priority — no urgency" : "Not in today's top 3";
+                return (
+                  <div key={task.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 8, padding: "3px 7px", borderRadius: 6, background: "var(--surface-2)", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, flexShrink: 0 }}>{task.priority}</span>
+                      <span style={{ fontSize: 12, color: "var(--text)", flex: 1, fontWeight: 600 }}>{task.title}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 12, marginTop: 4, paddingLeft: 2 }}>
+                      <span style={{ fontSize: 9, color: "var(--muted)" }}>{reason}</span>
+                      <span style={{ fontSize: 9, color: "var(--muted)", marginLeft: "auto" }}>Suggested: {suggestedDate}</span>
+                    </div>
+                  </div>
+                );
+              })}
               <button onClick={() => onNavigate("tasks")} style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 12, padding: "5px 0", border: 0, color: "var(--accent-dark)", background: "none", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
                 View all tasks <ChevronRight size={14} />
               </button>

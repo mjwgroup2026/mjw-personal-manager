@@ -5,7 +5,7 @@ import type { Priority, Task } from "@/lib/types";
 import { Field, Modal, inputStyle, selectStyle } from "@/components/ui/Modal";
 
 const AREAS = ["Personal", "Work", "Health", "Money", "Home", "Learning", "Other"];
-const PRIORITIES: Priority[] = ["high", "medium", "low"];
+const PRIORITIES: Priority[] = ["critical", "high", "medium", "low"];
 
 export function TasksSection({
   tasks,
@@ -99,7 +99,7 @@ export function TasksSection({
               </button>
               <div className="task-copy">
                 <strong>{task.title}</strong>
-                <span>{task.area}<i />{task.time}</span>
+                <span>{task.area}<i />{task.time}{task.dueDate && <><i />Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</>}</span>
               </div>
               <span className={`priority ${task.priority}`}>{task.priority}</span>
               <button
@@ -171,13 +171,15 @@ function TaskModal({
   const [area, setArea] = useState(initial?.area ?? "Personal");
   const [time, setTime] = useState(initial?.time ?? "15 min");
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? "medium");
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
+  const [nextAction, setNextAction] = useState(initial?.nextAction ?? "");
 
   return (
     <Modal title={initial ? "Edit task" : "Add task"} onClose={onClose}>
       <Field label="What needs doing?">
         <input style={inputStyle} autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Call the dentist" />
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
         <Field label="Area">
           <select style={selectStyle} value={area} onChange={(e) => setArea(e.target.value)}>
             {AREAS.map((a) => <option key={a}>{a}</option>)}
@@ -191,12 +193,18 @@ function TaskModal({
             {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
           </select>
         </Field>
+        <Field label="Due date">
+          <input style={inputStyle} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </Field>
       </div>
+      <Field label="Next action (optional)">
+        <input style={inputStyle} value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="e.g. Email Sarah with the draft" />
+      </Field>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
         <button
           className="primary-btn"
-          onClick={() => { if (title.trim()) onSave({ title: title.trim(), area, time, priority }); }}
+          onClick={() => { if (title.trim()) onSave({ title: title.trim(), area, time, priority, dueDate: dueDate || undefined, nextAction: nextAction || undefined }); }}
         >
           {initial ? "Save changes" : "Add task"}
         </button>
