@@ -33,6 +33,7 @@ import { signOut, useSession } from "next-auth/react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import type { Habit, JournalEntry, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
+import { IMPORT_TASKS, IMPORT_HABITS, IMPORT_PROJECTS, applyMoneyImport } from "@/lib/personalImport";
 import { useUserData } from "@/lib/useUserData";
 import MjwLogo from "./MjwLogo";
 import { HabitsSection } from "./sections/HabitsSection";
@@ -234,6 +235,33 @@ export default function Dashboard() {
     setPeople(DEFAULT_PEOPLE);
   }
 
+  function handleImportPersonal() {
+    const base = Date.now();
+    // Deduplicate tasks by title
+    const existingTitles = new Set(tasks.map((t) => t.title));
+    const newTasks: Task[] = IMPORT_TASKS
+      .filter((t) => !existingTitles.has(t.title))
+      .map((t, i) => ({ ...t, id: base + i }));
+
+    // Deduplicate habits by name
+    const existingHabitNames = new Set(habits.map((h) => h.name));
+    const newHabits: Habit[] = IMPORT_HABITS
+      .filter((h) => !existingHabitNames.has(h.name))
+      .map((h, i) => ({ ...h, id: base + 200 + i }));
+
+    // Deduplicate projects by name
+    const existingProjectNames = new Set(projects.map((p) => p.name));
+    const newProjects: Project[] = IMPORT_PROJECTS
+      .filter((p) => !existingProjectNames.has(p.name))
+      .map((p, i) => ({ ...p, id: base + 400 + i }));
+
+    setTasks([...tasks, ...newTasks]);
+    setHabits([...habits, ...newHabits]);
+    setProjects([...projects, ...newProjects]);
+    setMoney(applyMoneyImport(money));
+    showToast(`Imported ${newTasks.length} tasks, ${newHabits.length} habits, ${newProjects.length} projects + money items`);
+  }
+
   const openTaskCount = tasks.filter((t) => !t.done).length;
   const firstName = displayName.split(" ")[0];
 
@@ -335,6 +363,7 @@ export default function Dashboard() {
               onToast={showToast}
               onResetData={resetAllData}
               onDisplayNameChange={setDisplayName}
+              onImportPersonal={handleImportPersonal}
             />
           )}
         </div>

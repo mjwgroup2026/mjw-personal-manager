@@ -1,8 +1,10 @@
 "use client";
 import { signOut } from "next-auth/react";
-import { AlertTriangle, Info, Key, LogOut, Pencil, Settings, Shield, Trash2, User } from "lucide-react";
+import { AlertTriangle, Download, Info, Key, LogOut, Pencil, Settings, Shield, Trash2, User } from "lucide-react";
 import { useState } from "react";
 import { Field, Modal, inputStyle } from "@/components/ui/Modal";
+import { IMPORT_TASKS, IMPORT_HABITS, IMPORT_PROJECTS, applyMoneyImport } from "@/lib/personalImport";
+import type { Task, Habit, Project, MoneyData } from "@/lib/types";
 
 export function SettingsSection({
   username,
@@ -10,17 +12,20 @@ export function SettingsSection({
   onToast,
   onResetData,
   onDisplayNameChange,
+  onImportPersonal,
 }: {
   username: string;
   displayName: string;
   onToast: (msg: string) => void;
   onResetData: () => void;
   onDisplayNameChange: (name: string) => void;
+  onImportPersonal?: () => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
   const [showEditUsername, setShowEditUsername] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   return (
     <div>
@@ -153,6 +158,48 @@ export function SettingsSection({
           </div>
         </section>
       </div>
+
+      {/* Personal Register Import */}
+      {onImportPersonal && (
+        <section className="panel" style={{ padding: 26, marginTop: 16, maxWidth: 900 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 13, background: "rgba(201,152,10,.12)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+              <Download size={20} style={{ color: "var(--gold)" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 700 }}>Import Personal Command Register</h3>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                Loads your Gmail-reviewed personal register (14 May–14 Jun 2026) into your dashboard.<br />
+                Adds <strong>{IMPORT_TASKS.length} tasks</strong>, <strong>{IMPORT_HABITS.length} habits</strong>, <strong>{IMPORT_PROJECTS.length} projects</strong>, and money items (loans + subscriptions).<br />
+                Existing items are not overwritten. Duplicates are skipped automatically. Data stays in your Supabase profile only.
+              </p>
+              <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(201,152,10,.06)", border: "1px solid rgba(201,152,10,.2)", fontSize: 11, color: "var(--muted)", marginBottom: 14 }}>
+                Privacy audit: all imported data is written to your personal Supabase row (same as all other data). No credentials, OTPs, or API keys are included per PER-RULE-001.
+              </div>
+              <button className="primary-btn" style={{ background: "var(--gold)", color: "#1a1a1a" }} onClick={() => setShowImportConfirm(true)}>
+                Import Personal Register
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {showImportConfirm && (
+        <Modal title="Import Personal Command Register?" onClose={() => setShowImportConfirm(false)}>
+          <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.6 }}>
+            This will add <strong>{IMPORT_TASKS.length} tasks</strong>, <strong>{IMPORT_HABITS.length} habits</strong>, <strong>{IMPORT_PROJECTS.length} projects</strong>, and money items to your dashboard. Existing items will not be changed.
+          </p>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--surface-2)", fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>
+            Source: Gmail review 14 May–14 Jun 2026. No credentials stored. Data stays in your account only.
+          </div>
+          <div className="modal-actions">
+            <button className="secondary-btn" onClick={() => setShowImportConfirm(false)}>Cancel</button>
+            <button className="primary-btn" style={{ background: "var(--gold)", color: "#1a1a1a" }} onClick={() => { onImportPersonal?.(); setShowImportConfirm(false); }}>
+              Yes, import now
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {showEditName && (
         <EditNameModal
