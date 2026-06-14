@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   Clock3,
+  FileText,
   Flame,
   FolderKanban,
   Home,
@@ -32,7 +33,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import type { Habit, JournalEntry, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
+import type { CalendarEvent, DocumentMeta, Habit, JournalEntry, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
 import { IMPORT_TASKS, IMPORT_HABITS, IMPORT_PROJECTS, applyMoneyImport } from "@/lib/personalImport";
 import { useUserData } from "@/lib/useUserData";
 import MjwLogo from "./MjwLogo";
@@ -41,10 +42,12 @@ import { JournalSection } from "./sections/JournalSection";
 import { MoneySection } from "./sections/MoneySection";
 import { PeopleSection } from "./sections/PeopleSection";
 import { ProjectsSection } from "./sections/ProjectsSection";
+import { CalendarSection } from "./sections/CalendarSection";
+import { DocumentsSection } from "./sections/DocumentsSection";
 import { SettingsSection } from "./sections/SettingsSection";
 import { TasksSection } from "./sections/TasksSection";
 
-type View = "today" | "tasks" | "habits" | "journal" | "money" | "projects" | "people" | "settings";
+type View = "today" | "tasks" | "habits" | "journal" | "calendar" | "money" | "projects" | "people" | "documents" | "settings";
 type QuickAddType = "task" | "habit" | "journal" | "money" | "project" | "person";
 type QuickFields = {
   title: string; area: string; time: string; priority: Priority; dueDate: string;
@@ -99,13 +102,15 @@ const DEFAULT_PEOPLE: Person[] = [
 ];
 
 const navItems: { id: View; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: "today", label: "Today", icon: Home },
-  { id: "tasks", label: "Tasks", icon: ListTodo },
-  { id: "habits", label: "Habits", icon: Flame },
-  { id: "journal", label: "Journal", icon: BookOpen },
-  { id: "money", label: "Money", icon: WalletCards },
-  { id: "projects", label: "Projects", icon: FolderKanban },
-  { id: "people", label: "People", icon: Users },
+  { id: "today",     label: "Today",     icon: Home },
+  { id: "tasks",     label: "Tasks",     icon: ListTodo },
+  { id: "habits",    label: "Habits",    icon: Flame },
+  { id: "journal",   label: "Journal",   icon: BookOpen },
+  { id: "calendar",  label: "Calendar",  icon: CalendarDays },
+  { id: "money",     label: "Money",     icon: WalletCards },
+  { id: "projects",  label: "Projects",  icon: FolderKanban },
+  { id: "people",    label: "People",    icon: Users },
+  { id: "documents", label: "Documents", icon: FileText },
 ];
 
 const sparkline = "0,34 18,31 36,32 54,22 72,25 90,14 108,18 126,8 144,11 162,4";
@@ -124,6 +129,8 @@ export default function Dashboard() {
   const [money, setMoney] = useUserData<MoneyData>(ns("money"), "money", DEFAULT_MONEY);
   const [projects, setProjects] = useUserData<Project[]>(ns("projects"), "projects", DEFAULT_PROJECTS);
   const [people, setPeople] = useUserData<Person[]>(ns("people"), "people", DEFAULT_PEOPLE);
+  const [calendarEvents, setCalendarEvents] = useUserData<CalendarEvent[]>(ns("calendar"), "calendar", []);
+  const [documents, setDocuments] = useUserData<DocumentMeta[]>(ns("documents"), "documents", []);
   const [dark, setDark] = useUserData<boolean>(ns("dark"), "dark", false);
   // Display name stored independently so user can edit it
   const [displayName, setDisplayName] = useUserData<string>(ns("display_name"), "display_name", sessionName);
@@ -353,9 +360,24 @@ export default function Dashboard() {
           {view === "tasks" && <TasksSection tasks={tasks} onChange={setTasks} onToast={showToast} />}
           {view === "habits" && <HabitsSection habits={habits} onChange={setHabits} onToast={showToast} />}
           {view === "journal" && <JournalSection entries={journal} onChange={setJournal} onToast={showToast} />}
+          {view === "calendar" && (
+            <CalendarSection
+              events={calendarEvents}
+              onChange={setCalendarEvents}
+              onToast={showToast}
+              onAddTask={(t) => setTasks((prev) => [...prev, { ...t, id: Date.now() }])}
+            />
+          )}
           {view === "money" && <MoneySection data={money} onChange={setMoney} onToast={showToast} />}
           {view === "projects" && <ProjectsSection projects={projects} onChange={setProjects} onToast={showToast} />}
           {view === "people" && <PeopleSection people={people} onChange={setPeople} onToast={showToast} />}
+          {view === "documents" && (
+            <DocumentsSection
+              documents={documents}
+              onChange={setDocuments}
+              onToast={showToast}
+            />
+          )}
           {view === "settings" && (
             <SettingsSection
               username={username}

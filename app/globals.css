@@ -305,3 +305,8 @@ kbd { padding: 3px 6px; border: 1px solid var(--line); border-radius: 5px; color
 .login-btn:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
 .login-btn:disabled { opacity: .5; cursor: not-allowed; }
 .login-footer { margin: 24px 0 0; color: #444; font-size: 10px; letter-spacing: .5px; }
+
+/* ── Calendar ── */
+@media (max-width: 860px) {
+  .calendar-grid-outer { grid-template-columns: 1fr !important; }
+}

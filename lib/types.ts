@@ -1,4 +1,6 @@
 export type Priority = "critical" | "high" | "medium" | "low";
+export type TaskStatus = "open" | "paused" | "archived";
+export type EffortLevel = "light" | "medium" | "heavy";
 
 export type Task = {
   id: number;
@@ -10,6 +12,9 @@ export type Task = {
   dueDate?: string;       // ISO date YYYY-MM-DD
   scheduledDate?: string; // ISO date YYYY-MM-DD
   nextAction?: string;
+  status?: TaskStatus;    // undefined = open (backward compat)
+  effort?: EffortLevel;
+  riskFlag?: boolean;
 };
 
 export type Habit = {
@@ -94,6 +99,28 @@ export type Project = {
   status: "active" | "paused" | "done";
   tasks: ProjectTask[];
   goals: ProjectGoal[];
+};
+
+export type CalendarEvent = {
+  id: number;
+  title: string;
+  date: string;          // ISO YYYY-MM-DD
+  time?: string;         // HH:MM (optional)
+  type: "appointment" | "deadline" | "reminder" | "birthday" | "other";
+  description?: string;
+  allDay?: boolean;
+};
+
+export type DocumentMeta = {
+  id: number;
+  name: string;          // user-editable display name
+  fileName: string;      // original file name
+  storagePath: string;   // path in Supabase Storage bucket
+  size: number;          // bytes
+  mimeType: string;
+  category: string;
+  notes: string;
+  uploadedAt: string;    // ISO date
 };
 
 export type Reminder = {
