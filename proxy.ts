@@ -8,6 +8,7 @@ export async function proxy(request: NextRequest) {
   // Allow public paths
   const isPublic =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";

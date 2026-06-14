@@ -1,9 +1,29 @@
+"use client";
+import { useState } from "react";
+
 export default function MjwLogo({ size = 64, className = "" }: { size?: number; className?: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (!imgFailed) {
+    return (
+      <img
+        src="/mjw-logo.png"
+        width={size}
+        height={size}
+        alt="MJW logo"
+        className={className}
+        style={{ borderRadius: "50%", objectFit: "cover", display: "block" }}
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
+
+  // SVG fallback if image not found
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 200 200"
+      viewBox="0 0 300 300"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -14,29 +34,20 @@ export default function MjwLogo({ size = 64, className = "" }: { size?: number; 
           <stop offset="0%" stopColor="#2a2a2a" />
           <stop offset="100%" stopColor="#0d0d0d" />
         </radialGradient>
-        <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="gold" x1="20%" y1="0%" x2="80%" y2="100%">
           <stop offset="0%" stopColor="#f5d070" />
-          <stop offset="40%" stopColor="#c9980a" />
-          <stop offset="70%" stopColor="#e8be50" />
-          <stop offset="100%" stopColor="#9a6f0a" />
+          <stop offset="35%" stopColor="#d4a017" />
+          <stop offset="65%" stopColor="#c9980a" />
+          <stop offset="100%" stopColor="#8a6000" />
         </linearGradient>
       </defs>
-      <circle cx="100" cy="100" r="100" fill="url(#bg-grad)" />
+      <circle cx="150" cy="150" r="150" fill="url(#bg-grad)" />
       {/* M */}
-      <path
-        d="M28 130 L28 72 L50 72 L64 100 L78 72 L100 72 L100 130 L84 130 L84 98 L70 122 L58 122 L44 98 L44 130 Z"
-        fill="url(#gold)"
-      />
+      <path d="M22,215 L22,88 L50,88 L80,155 L110,88 L138,88 L138,215 L112,215 L112,138 L80,195 L48,138 L48,215 Z" fill="url(#gold)" />
       {/* J */}
-      <path
-        d="M104 72 L120 72 L120 116 C120 124 115 132 104 132 C93 132 88 125 88 116 L104 116 C104 119 105 120 106 120 C108 120 108 118 108 116 L108 88 L104 88 Z"
-        fill="url(#gold)"
-      />
+      <path d="M148,88 L178,88 L178,200 C178,218 163,228 146,228 C129,228 114,218 114,200 L136,196 C136,207 156,207 156,200 L156,112 L148,112 Z" fill="url(#gold)" />
       {/* W */}
-      <path
-        d="M122 72 L136 72 L144 108 L152 72 L166 72 L174 108 L182 72 L196 72 L182 130 L166 130 L158 96 L150 130 L136 130 Z"
-        fill="url(#gold)"
-      />
+      <path d="M162,88 L188,88 L214,185 L240,88 L262,88 L288,185 L278,215 L240,110 L214,215 L188,215 L152,110 Z" fill="url(#gold)" />
     </svg>
   );
 }

@@ -1,21 +1,12 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { getSupabaseAdmin } from "./supabase";
 
-// Users are defined via environment variables.
-// Format: USERS=[{"username":"alice","password":"<bcrypt-hash>","name":"Alice"},...]
-// Generate a hash: https://bcrypt-generator.com  (rounds=10)
-// Or set ADMIN_USER / ADMIN_PASS / ADMIN_NAME for a single quick user.
-
-function getUsers(): Array<{ username: string; password: string; name: string }> {
+function getEnvUsers(): Array<{ username: string; password: string; name: string }> {
   if (process.env.USERS) {
-    try {
-      return JSON.parse(process.env.USERS);
-    } catch {
-      console.error("Invalid USERS env var — expected JSON array");
-    }
+    try { return JSON.parse(process.env.USERS); } catch { /* invalid */ }
   }
-  // Fallback single admin from individual env vars (plain password, hashed at runtime)
   const user = process.env.ADMIN_USER;
   const pass = process.env.ADMIN_PASS;
   const name = process.env.ADMIN_NAME ?? "Admin";
@@ -33,16 +24,30 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials.password) return null;
-        const users = getUsers();
-        const found = users.find(
-          (u) => u.username.toLowerCase() === credentials.username.toLowerCase()
-        );
+        const uname = credentials.username.toLowerCase().trim();
+
+        // 1. Check Supabase users table first (registered users)
+        const db = getSupabaseAdmin();
+        if (db) {
+          const { data } = await db
+            .from("mjw_users")
+            .select("username, password_hash, display_name")
+            .eq("username", uname)
+            .single();
+          if (data) {
+            const valid = await bcrypt.compare(credentials.password, data.password_hash);
+            if (!valid) return null;
+            return { id: data.username, name: data.display_name, email: `${data.username}@mjw.local` };
+          }
+        }
+
+        // 2. Fall back to USERS env var (existing/admin accounts)
+        const envUsers = getEnvUsers();
+        const found = envUsers.find((u) => u.username.toLowerCase() === uname);
         if (!found) return null;
-        // Support both bcrypt hashes and plain-text passwords (plain only for dev)
-        const valid =
-          found.password.startsWith("$2")
-            ? await bcrypt.compare(credentials.password, found.password)
-            : credentials.password === found.password;
+        const valid = found.password.startsWith("$2")
+          ? await bcrypt.compare(credentials.password, found.password)
+          : credentials.password === found.password;
         if (!valid) return null;
         return { id: found.username, name: found.name, email: `${found.username}@mjw.local` };
       },

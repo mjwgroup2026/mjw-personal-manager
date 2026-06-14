@@ -20,6 +20,7 @@ export function SettingsSection({
   const [showPassword, setShowPassword] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
+  const [showEditUsername, setShowEditUsername] = useState(false);
 
   return (
     <div>
@@ -59,11 +60,23 @@ export function SettingsSection({
                 </button>
               </div>
             </div>
-            <Row label="Username" value={username} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)", fontSize: 12 }}>
+              <span style={{ color: "var(--muted)" }}>Username</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <strong>{username}</strong>
+                <button
+                  onClick={() => setShowEditUsername(true)}
+                  style={{ width: 26, height: 26, display: "grid", placeItems: "center", borderRadius: 7, border: "1px solid var(--line)", background: "var(--surface-2)", cursor: "pointer" }}
+                  aria-label="Change username"
+                >
+                  <Pencil size={12} />
+                </button>
+              </div>
+            </div>
             <Row label="Workspace" value="Personal workspace" />
           </div>
           <p style={{ marginTop: 18, fontSize: 11, color: "var(--muted)", lineHeight: 1.6 }}>
-            Username changes require updating the <strong>USERS</strong> environment variable. Display name can be changed here anytime.
+            Username and display name can be changed anytime. A username change will require you to sign in again.
           </p>
         </section>
 
@@ -149,6 +162,14 @@ export function SettingsSection({
         />
       )}
 
+      {showEditUsername && (
+        <ChangeUsernameModal
+          current={username}
+          onToast={onToast}
+          onClose={() => setShowEditUsername(false)}
+        />
+      )}
+
       {showPassword && (
         <PasswordModal username={username} onToast={onToast} onClose={() => setShowPassword(false)} />
       )}
@@ -201,11 +222,62 @@ function EditNameModal({ current, onSave, onClose }: { current: string; onSave: 
         />
       </Field>
       <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--muted)" }}>
-        This is how your name appears across MJW Tracker. It is saved to your profile.
+        This is how your name appears across MJW Tracker.
       </p>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
         <button className="primary-btn" onClick={() => { if (name.trim()) onSave(name.trim()); }}>Save name</button>
+      </div>
+    </Modal>
+  );
+}
+
+function ChangeUsernameModal({ current, onToast, onClose }: { current: string; onToast: (m: string) => void; onClose: () => void }) {
+  const [newUsername, setNewUsername] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSave() {
+    setError("");
+    if (!newUsername.trim()) { setError("Username is required."); return; }
+    setLoading(true);
+    const res = await fetch("/api/auth/change-username", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ newUsername: newUsername.trim() }),
+    });
+    const json = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(json.error ?? "Failed to change username."); return; }
+    onToast("Username changed. Please sign in again with your new username.");
+    onClose();
+    // Force sign out so they re-authenticate with new username
+    setTimeout(() => {
+      import("next-auth/react").then(({ signOut }) => signOut({ callbackUrl: "/login" }));
+    }, 1500);
+  }
+
+  return (
+    <Modal title="Change username" onClose={onClose}>
+      <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+        Current username: <strong>{current}</strong>. All your data will be migrated to the new username. You will be signed out after the change.
+      </p>
+      <Field label="New username">
+        <input
+          style={inputStyle}
+          autoFocus
+          value={newUsername}
+          onChange={(e) => setNewUsername(e.target.value)}
+          placeholder="new-username"
+          onKeyDown={(e) => e.key === "Enter" && handleSave()}
+        />
+      </Field>
+      {error && <p style={{ color: "#c0392b", fontSize: 12, margin: "0 0 8px" }}>{error}</p>}
+      <div className="modal-actions">
+        <button className="secondary-btn" onClick={onClose}>Cancel</button>
+        <button className="primary-btn" onClick={handleSave} disabled={loading}>
+          {loading ? "Saving…" : "Change username"}
+        </button>
       </div>
     </Modal>
   );
@@ -216,21 +288,28 @@ function PasswordModal({ username, onToast, onClose }: { username: string; onToa
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleChange() {
     setError("");
     if (!current || !next) { setError("All fields required."); return; }
     if (next.length < 6) { setError("New password must be at least 6 characters."); return; }
     if (next !== confirm) { setError("Passwords don't match."); return; }
-    onToast("To change your password, update the USERS environment variable on Vercel and redeploy.");
+    setLoading(true);
+    const res = await fetch("/api/auth/change-password", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ currentPassword: current, newPassword: next }),
+    });
+    const json = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(json.error ?? "Failed to change password."); return; }
+    onToast("Password changed successfully.");
     onClose();
   }
 
   return (
     <Modal title="Change password" onClose={onClose}>
-      <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-        Password changes are managed via the <strong>USERS</strong> environment variable on Vercel. Update your password hash there to make it permanent.
-      </p>
       <Field label="Current password">
         <input style={inputStyle} type="password" autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
       </Field>
@@ -243,9 +322,10 @@ function PasswordModal({ username, onToast, onClose }: { username: string; onToa
       {error && <p style={{ color: "#c0392b", fontSize: 12, margin: "0 0 8px" }}>{error}</p>}
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
-        <button className="primary-btn" onClick={handleChange}>Confirm</button>
+        <button className="primary-btn" onClick={handleChange} disabled={loading}>
+          {loading ? "Saving…" : "Change password"}
+        </button>
       </div>
     </Modal>
   );
 }
-

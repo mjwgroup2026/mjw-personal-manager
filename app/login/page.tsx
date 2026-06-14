@@ -14,6 +14,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const callbackUrl = params.get("callbackUrl") ?? "/";
+  const justRegistered = params.get("registered") === "1";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,6 +41,12 @@ function LoginForm() {
         </div>
         <h1 className="login-title">MJW Tracker</h1>
         <p className="login-sub">Sign in to your workspace</p>
+
+        {justRegistered && (
+          <p style={{ color: "#2d7a4a", background: "#eafaf1", border: "1px solid #b7e4c7", borderRadius: 8, padding: "10px 14px", fontSize: 13, margin: "0 0 12px", textAlign: "center" }}>
+            Account created! Sign in below.
+          </p>
+        )}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">
@@ -73,7 +80,12 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="login-footer">MJW Tracker · Private workspace</p>
+        <p className="login-footer">
+          New here?{" "}
+          <a href="/register" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
+            Create an account
+          </a>
+        </p>
       </div>
     </div>
   );
