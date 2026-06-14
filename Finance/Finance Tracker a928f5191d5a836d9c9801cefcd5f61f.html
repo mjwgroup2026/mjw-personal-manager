@@ -1,0 +1,758 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Finance Tracker</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="a928f519-1d5a-836d-9c98-01cefcd5f61f" class="page sans"><header><img class="page-cover-image" src="Finance%20Tracker/notion-finance-tracker.png" style="object-position:center 50%"/><div class="page-header-icon page-header-icon-with-cover"><img class="icon notion-static-icon" src="https://app.notion.com/icons/chart-donut_gray.svg"/></div><h1 class="page-title" dir="auto">Finance Tracker</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><blockquote id="79f8f519-1d5a-83e8-90df-8111ec73b566" class=""><strong>The goal isn’t more money. The goal is living life on your terms.</strong><em><mark class="highlight-gray"> – Chris Brogan</mark></em></blockquote></div><div style="display:contents" dir="auto"><div id="8388f519-1d5a-8386-a9f3-017d29cb8f91" class="column-list"><div style="display:contents" dir="auto"><div id="50b8f519-1d5a-82dd-aa38-018bfe0afd2c" style="width:16.666666666666664%" class="column"><div style="display:contents" dir="auto"><h3 id="bdc8f519-1d5a-836c-b22a-01e53652fc39" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Quick Actions</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="afe8f519-1d5a-8305-b41c-8169eeddc1a3"><div style="width:100%"></div></figure></div><div style="display:contents" dir="auto"><p id="d198f519-1d5a-831e-a7e7-81702a4dc50c" class="">
+</p></div></div></div><div style="display:contents" dir="auto"><div id="87e8f519-1d5a-83b3-90c5-01faf49d27fd" style="width:50%" class="column"><div style="display:contents" dir="auto"><h3 id="eee8f519-1d5a-83c9-a58e-0162e20df3a9" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Account Balance</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="d828f519-1d5a-83d7-9bc2-012e8882f375"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="6058f519-1d5a-8284-9e9b-01b5c8747a91" class="collection-content"><h4 class="collection-title">Transactions</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:57.98319327731093%"/><col style="width:42.01680672268907%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th>Property</th></tr></thead><tbody><tr id="5618f519-1d5a-831d-b188-018dd8bd8609"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%205618f5191d5a831db188018dd8bd8609.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-^GvC"></td></tr><tr id="a5d8f519-1d5a-8375-9f5f-810e6d60278a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%20a5d8f5191d5a83759f5f810e6d60278a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-^GvC"></td></tr><tr id="a358f519-1d5a-82ff-b7de-81f62e73813a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20a358f5191d5a82ffb7de81f62e73813a.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-^GvC"></td></tr><tr id="40f8f519-1d5a-82f1-ba19-01e9195ab65d"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%2040f8f5191d5a82f1ba1901e9195ab65d.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-^GvC"></td></tr><tr id="2088f519-1d5a-8393-b914-81007990145b"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%202088f5191d5a8393b91481007990145b.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-^GvC"></td></tr><tr id="7668f519-1d5a-820d-8146-813f341b15dc"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%207668f5191d5a820d8146813f341b15dc.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-^GvC"></td></tr><tr id="cd78f519-1d5a-834d-8725-017f3ee21fa0"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20cd78f5191d5a834d8725017f3ee21fa0.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-^GvC"></td></tr><tr id="0768f519-1d5a-83ac-a1f3-8109098ada00"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%200768f5191d5a83aca1f38109098ada00.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-^GvC"></td></tr><tr id="0978f519-1d5a-8290-a92e-813511e1c9c7"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%200978f5191d5a8290a92e813511e1c9c7.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-^GvC"></td></tr><tr id="8e78f519-1d5a-833e-8b32-81fccd26bf5c"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Bonus%208e78f5191d5a833e8b3281fccd26bf5c.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/currency_gray.svg"/>Bonus</a></td><td class="cell-^GvC"></td></tr><tr id="7fb8f519-1d5a-82c0-8705-81dc5fe6e524"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%207fb8f5191d5a82c0870581dc5fe6e524.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-^GvC"></td></tr><tr id="6f68f519-1d5a-833d-a5d5-0133738539e7"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%206f68f5191d5a833da5d50133738539e7.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-^GvC"></td></tr><tr id="4568f519-1d5a-8346-ab6a-81b0fce6f7a2"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/New%20Income%204568f5191d5a8346ab6a81b0fce6f7a2.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/credit-card_gray.svg"/>New Income</a></td><td class="cell-^GvC"></td></tr></tbody></table></div><br/><br/></div></div></div></figure></div><div style="display:contents" dir="auto"><p id="9c88f519-1d5a-8355-a87b-01b3cf57c70b" class="">
+</p></div></div></div><div style="display:contents" dir="auto"><div id="e6b8f519-1d5a-835f-94fb-813a85eebaad" style="width:33.33333333333333%" class="column"><div style="display:contents" dir="auto"><h3 id="8c68f519-1d5a-82aa-8614-01bfc6922e4f" class=""> </h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="0b38f519-1d5a-8224-bba3-013867d858b0"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="2568f519-1d5a-82a8-b74c-015cf80d411c" class="collection-content"><h4 class="collection-title">Accounts &amp; Funds</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:57.98319327731093%"/><col style="width:42.01680672268907%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th>Property</th></tr></thead><tbody><tr id="a2b8f519-1d5a-82c7-807a-8172a208c56e"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Crypto%20Wallet%20a2b8f5191d5a82c7807a8172a208c56e.html"><img class="icon" src="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Crypto%20Wallet/Bitcoin.png"/>Crypto Wallet</a></td><td class="cell-PPV@"></td></tr><tr id="d898f519-1d5a-83a7-b51a-01733b92330f"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Bank%20Account%20d898f5191d5a83a7b51a01733b92330f.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/library_gray.svg"/>Bank Account</a></td><td class="cell-PPV@"></td></tr><tr id="a628f519-1d5a-82c5-99a2-01552b7fb0ef"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Paypal%20a628f5191d5a82c599a201552b7fb0ef.html"><img class="icon" src="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Paypal/av07zqidc.webp"/>Paypal</a></td><td class="cell-PPV@"></td></tr></tbody></table></div><br/><br/></div></div></div></figure></div></div></div></div></div><div style="display:contents" dir="auto"><div id="85a8f519-1d5a-8311-96ff-01fb3cfc532e" class="column-list"><div style="display:contents" dir="auto"><div id="afd8f519-1d5a-82f6-8017-01610f3db376" style="width:50%" class="column"><div style="display:contents" dir="auto"><h3 id="a3c8f519-1d5a-82a6-ac63-81976c58daf5" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Income</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="3428f519-1d5a-8287-ac4b-01c6ce461e24"><div style="width:100%"><div style="display:contents" dir="auto"><p id="0918f519-1d5a-82a5-8892-013b842da7d2" class="">
+</p></div><div style="display:contents" dir="auto"><p id="2188f519-1d5a-824a-8c1d-01862ee5b8b0" class="">
+</p></div><div style="display:contents" dir="auto"><p id="3be8f519-1d5a-8247-92b7-814ce2c6f0ac" class="">
+</p></div></div></figure></div><div style="display:contents" dir="auto"><p id="23a8f519-1d5a-82f0-8478-01b54c10e9d1" class="">
+</p></div></div></div><div style="display:contents" dir="auto"><div id="7848f519-1d5a-8331-8930-016ee4ab2197" style="width:50%" class="column"><div style="display:contents" dir="auto"><h3 id="26f8f519-1d5a-8309-a1df-019dc598730d" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Expenses</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="40e8f519-1d5a-829f-b0d3-01a71902b75e"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="04b8f519-1d5a-8384-be84-014612699713" class="collection-content"><h4 class="collection-title">Transactions</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:30.180180180180184%"/><col style="width:15.465465465465467%"/><col style="width:24.324324324324326%"/><col style="width:30.03003003003002%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/hashtag_gray.svg" style="width:14px;height:14px;display:block"/></span>Amount</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/calendar_gray.svg" style="width:14px;height:14px;display:block"/></span>Date</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/categories_gray.svg" style="width:14px;height:14px;display:block"/></span>Category</th></tr></thead><tbody><tr id="7fb8f519-1d5a-82c0-8705-81dc5fe6e524"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%207fb8f5191d5a82c0870581dc5fe6e524.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-KtsP">$1,500.00</td><td class="cell-n}xU"><time>February 1, 2025</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Rent%20Mortgage%201fc8f5191d5a823c8f7b010e7c3dd97a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/wall_gray.svg"/>Rent/Mortgage</a></td></tr><tr id="7668f519-1d5a-820d-8146-813f341b15dc"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%207668f5191d5a820d8146813f341b15dc.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-KtsP">$12.00</td><td class="cell-n}xU"><time>January 15, 2025</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Subscriptions%20e098f5191d5a8259996f01b53fbe7d47.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/window_gray.svg"/>Subscriptions</a></td></tr><tr id="5618f519-1d5a-831d-b188-018dd8bd8609"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%205618f5191d5a831db188018dd8bd8609.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-KtsP">$1,500.00</td><td class="cell-n}xU"><time>January 1, 2025</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Rent%20Mortgage%201fc8f5191d5a823c8f7b010e7c3dd97a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/wall_gray.svg"/>Rent/Mortgage</a></td></tr><tr id="a358f519-1d5a-82ff-b7de-81f62e73813a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20a358f5191d5a82ffb7de81f62e73813a.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-KtsP">$12.00</td><td class="cell-n}xU"><time>December 15, 2024</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Salary%206eb8f5191d5a83b5bca6816caecfc8fd.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td></tr><tr id="6f68f519-1d5a-833d-a5d5-0133738539e7"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%206f68f5191d5a833da5d50133738539e7.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-KtsP">$1,500.00</td><td class="cell-n}xU"><time>December 1, 2024</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Rent%20Mortgage%201fc8f5191d5a823c8f7b010e7c3dd97a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/wall_gray.svg"/>Rent/Mortgage</a></td></tr><tr id="cd78f519-1d5a-834d-8725-017f3ee21fa0"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20cd78f5191d5a834d8725017f3ee21fa0.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-KtsP">$12.00</td><td class="cell-n}xU"><time>November 15, 2024</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Subscriptions%20e098f5191d5a8259996f01b53fbe7d47.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/window_gray.svg"/>Subscriptions</a></td></tr><tr id="0768f519-1d5a-83ac-a1f3-8109098ada00"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%200768f5191d5a83aca1f38109098ada00.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-KtsP">$1,500.00</td><td class="cell-n}xU"><time>November 1, 2024</time></td><td class="cell-[Ywq"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Rent%20Mortgage%201fc8f5191d5a823c8f7b010e7c3dd97a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/wall_gray.svg"/>Rent/Mortgage</a></td></tr></tbody></table></div><br/><br/></div></div><div style="display:contents" dir="auto"><p id="f098f519-1d5a-8257-9063-01a80dd8b49f" class="">
+</p></div><div style="display:contents" dir="auto"><p id="aff8f519-1d5a-828c-a3fb-019d705330f1" class="">
+</p></div></div></figure></div><div style="display:contents" dir="auto"><p id="a8b8f519-1d5a-8376-8df4-8108f0920aad" class="">
+</p></div></div></div></div></div><div style="display:contents" dir="auto"><h3 id="4b38f519-1d5a-839f-b61f-819469462134" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Overview</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default_background callout" style="white-space:pre-wrap;display:flex" id="ccc8f519-1d5a-83b9-9273-0164f97a679b"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="47d8f519-1d5a-8232-b6a5-81e0fe590bd0" class="collection-content"><h4 class="collection-title">Months</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:18.91891891891892%"/><col style="width:13.513513513513514%"/><col style="width:13.513513513513514%"/><col style="width:13.513513513513514%"/><col style="width:13.513513513513514%"/><col style="width:13.513513513513514%"/><col style="width:13.513513513513502%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Income Label</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Income</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Expenses Label</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Expenses</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Net Label</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Net</th></tr></thead><tbody><tr id="4978f519-1d5a-83d9-a2b2-81b2e55d49bb"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/January%204978f5191d5a83d9a2b281b2e55d49bb.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>January</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="9c78f519-1d5a-8376-ba1a-8173d8b424d0"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/February%209c78f5191d5a8376ba1a8173d8b424d0.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>February</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="ae58f519-1d5a-8227-a7fa-015765b3e232"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/March%20ae58f5191d5a8227a7fa015765b3e232.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>March</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="d658f519-1d5a-8270-ab5b-81005c5d50da"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/April%20d658f5191d5a8270ab5b81005c5d50da.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>April</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="8ff8f519-1d5a-8352-8280-810e2ebe050d"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/May%208ff8f5191d5a83528280810e2ebe050d.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>May</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="a128f519-1d5a-839c-8d75-817450eb50e3"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/June%20a128f5191d5a839c8d75817450eb50e3.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>June</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="c2d8f519-1d5a-8353-b707-813acc1b0c2b"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/July%20c2d8f5191d5a8353b707813acc1b0c2b.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>July</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="ee78f519-1d5a-8379-af15-815575a81ff9"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/August%20ee78f5191d5a8379af15815575a81ff9.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>August</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="c328f519-1d5a-838b-a4e9-819f02e13cf6"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/September%20c328f5191d5a838ba4e9819f02e13cf6.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>September</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="89d8f519-1d5a-83a6-81ca-8173cf558207"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/October%2089d8f5191d5a83a681ca8173cf558207.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>October</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="fbc8f519-1d5a-821d-8adf-814729dfc04f"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/November%20fbc8f5191d5a821d8adf814729dfc04f.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>November</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr><tr id="b3e8f519-1d5a-8357-be20-01a5d4ae94b2"><td class="cell-title"><a href="Finance%20Tracker/Databases/Months/December%20b3e8f5191d5a8357be2001a5d4ae94b2.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/calendar_pink.svg"/>December</a></td><td class="cell-k\m&gt;">Income</td><td class="cell-|WOp">$0.00</td><td class="cell-\k~&gt;">Expenses</td><td class="cell-tfI[">$0.00</td><td class="cell-hsa]">Net</td><td class="cell-rGF]">$0.00</td></tr></tbody></table></div><br/><br/></div></div></div></figure></div><div style="display:contents" dir="auto"><p id="6118f519-1d5a-82e9-aba3-819a318ff51e" class="">
+</p></div><div style="display:contents" dir="auto"><div id="20d8f519-1d5a-8309-bce2-8162d4e1b963" class="column-list"><div style="display:contents" dir="auto"><div id="2618f519-1d5a-8306-8102-816da98ea480" style="width:31.25%" class="column"><div style="display:contents" dir="auto"><h3 id="73a8f519-1d5a-8381-8cee-014f06d7278c" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Accounts &amp; Funds</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default_background callout" style="white-space:pre-wrap;display:flex" id="dcd8f519-1d5a-8389-a8ba-8145f3649515"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="8b28f519-1d5a-8379-8a0f-016a366e33f3" class="collection-content"><h4 class="collection-title">Accounts &amp; Funds</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:41.17647058823529%"/><col style="width:29.411764705882355%"/><col style="width:29.411764705882348%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Balance Label</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/chart-area_gray.svg" style="width:14px;height:14px;display:block"/></span>Balance</th></tr></thead><tbody><tr id="d898f519-1d5a-83a7-b51a-01733b92330f"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Bank%20Account%20d898f5191d5a83a7b51a01733b92330f.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/library_gray.svg"/>Bank Account</a></td><td class="cell-k`tG">Balance</td><td class="cell-JGiu">$26,964.00</td></tr><tr id="a628f519-1d5a-82c5-99a2-01552b7fb0ef"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Paypal%20a628f5191d5a82c599a201552b7fb0ef.html"><img class="icon" src="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Paypal/av07zqidc.webp"/>Paypal</a></td><td class="cell-k`tG">Balance</td><td class="cell-JGiu">$5,000.00</td></tr><tr id="a2b8f519-1d5a-82c7-807a-8172a208c56e"><td class="cell-title"><a href="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Crypto%20Wallet%20a2b8f5191d5a82c7807a8172a208c56e.html"><img class="icon" src="Finance%20Tracker/Databases/Accounts%20&amp;%20Funds/Crypto%20Wallet/Bitcoin.png"/>Crypto Wallet</a></td><td class="cell-k`tG">Balance</td><td class="cell-JGiu">$2,000.00</td></tr></tbody></table></div><br/><br/></div></div></div></figure></div><div style="display:contents" dir="auto"><h3 id="bda8f519-1d5a-83ff-beec-011472b85d83" class="block-color-purple"><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Transaction Categories</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default_background callout" style="white-space:pre-wrap;display:flex" id="74a8f519-1d5a-8399-a736-015799870571"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="d7f8f519-1d5a-831e-b166-01dde7ce5983" class="collection-content"><h4 class="collection-title">Transaction Categories</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:100%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th></tr></thead><tbody><tr id="0358f519-1d5a-8237-b361-0166c3bf8588"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Digital%20Products%200358f5191d5a8237b3610166c3bf8588.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/package_gray.svg"/>Digital Products</a></td></tr><tr id="8eb8f519-1d5a-83d2-b042-81a028617511"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Online%20Courses%208eb8f5191d5a83d2b04281a028617511.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/movie-clapboard-play_gray.svg"/>Online Courses</a></td></tr><tr id="ee28f519-1d5a-8398-9ef3-01403ddd4da5"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Affiliate%20Marketing%20ee28f5191d5a83989ef301403ddd4da5.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/megaphone_gray.svg"/>Affiliate Marketing</a></td></tr><tr id="0468f519-1d5a-82c4-9215-0163eb782b5e"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Disability%20Benefits%200468f5191d5a82c492150163eb782b5e.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/wheelchair_gray.svg"/>Disability Benefits</a></td></tr><tr id="7f38f519-1d5a-830d-8a3f-815134300489"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Unemployment%20Benefits%207f38f5191d5a830d8a3f815134300489.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/umbrella_gray.svg"/>Unemployment Benefits</a></td></tr><tr id="2288f519-1d5a-825a-8638-812c5fb8fb81"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Social%20Security%202288f5191d5a825a8638812c5fb8fb81.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/shield_gray.svg"/>Social Security</a></td></tr><tr id="4858f519-1d5a-83f7-a71e-81553dd9dcf9"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Pension%20Payments%204858f5191d5a83f7a71e81553dd9dcf9.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/currency-coin_gray.svg"/>Pension Payments</a></td></tr><tr id="7818f519-1d5a-83ac-9687-81f50e3c54f0"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Short-term%20Rentals%207818f5191d5a83ac968781f50e3c54f0.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Short-term Rentals</a></td></tr><tr id="ccb8f519-1d5a-8378-936e-013d85f042d5"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Long-term%20Property%20Rentals%20ccb8f5191d5a8378936e013d85f042d5.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/library_gray.svg"/>Long-term Property Rentals</a></td></tr><tr id="9d18f519-1d5a-8392-9672-018e6340c98a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Interests%209d18f5191d5a83929672018e6340c98a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/activity_gray.svg"/>Interests</a></td></tr><tr id="8bb8f519-1d5a-8252-8cdc-011537e5ea05"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Dividends%208bb8f5191d5a82528cdc011537e5ea05.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/atm_gray.svg"/>Dividends</a></td></tr><tr id="7338f519-1d5a-826b-96af-0161c34d0608"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Small%20Business%20Profits%207338f5191d5a826b96af0161c34d0608.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/briefcase_gray.svg"/>Small Business Profits</a></td></tr><tr id="2a58f519-1d5a-83b3-aaac-01908f4ff924"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Freelance%20Earnings%202a58f5191d5a83b3aaac01908f4ff924.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/laptop_gray.svg"/>Freelance Earnings</a></td></tr><tr id="6488f519-1d5a-82f1-ba2a-8123e2facf8a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Bonuses%20&amp;%20Commissions%206488f5191d5a82f1ba2a8123e2facf8a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/currency_gray.svg"/>Bonuses &amp; Commissions</a></td></tr><tr id="6eb8f519-1d5a-83b5-bca6-816caecfc8fd"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transaction%20Categories/Salary%206eb8f5191d5a83b5bca6816caecfc8fd.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td></tr></tbody></table></div><br/><br/></div></div></div></figure></div></div></div><div style="display:contents" dir="auto"><div id="eb98f519-1d5a-83a7-b00a-81066c5cd697" style="width:68.75%" class="column"><div style="display:contents" dir="auto"><h3 id="4308f519-1d5a-83a3-8b5d-81461e3bf958" class=""><mark class="highlight-pink"><mark class="highlight-pink_background"><code>Planner</code></mark></mark></h3></div><div style="display:contents" dir="ltr"><figure class="block-color-default callout" style="white-space:pre-wrap;display:flex" id="6c18f519-1d5a-8271-990e-01140e367173"><div style="width:100%"><div style="display:contents" dir="ltr"><div id="d978f519-1d5a-829a-8d3a-8175d036a609" class="collection-content"><h4 class="collection-title">Transactions</h4><div class="collection-content-wrapper"><table class="collection-content"><colgroup><col style="width:41.17647058823529%"/><col style="width:29.411764705882355%"/><col style="width:29.411764705882348%"/></colgroup><thead><tr><th><span class="icon property-icon"><img src="https://app.notion.com/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>Name</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/arrow-circle-down_gray.svg" style="width:14px;height:14px;display:block"/></span>Type</th><th><span class="icon property-icon"><img src="https://app.notion.com/icons/formula_gray.svg" style="width:14px;height:14px;display:block"/></span>Calculated Amount</th></tr></thead><tbody><tr id="5618f519-1d5a-831d-b188-018dd8bd8609"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%205618f5191d5a831db188018dd8bd8609.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$1,500.00</td></tr><tr id="a5d8f519-1d5a-8375-9f5f-810e6d60278a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%20a5d8f5191d5a83759f5f810e6d60278a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG">$5,500.00</td></tr><tr id="a358f519-1d5a-82ff-b7de-81f62e73813a"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20a358f5191d5a82ffb7de81f62e73813a.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$12.00</td></tr><tr id="40f8f519-1d5a-82f1-ba19-01e9195ab65d"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%2040f8f5191d5a82f1ba1901e9195ab65d.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG">$5,500.00</td></tr><tr id="2088f519-1d5a-8393-b914-81007990145b"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%202088f5191d5a8393b91481007990145b.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG">$5,500.00</td></tr><tr id="7668f519-1d5a-820d-8146-813f341b15dc"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%207668f5191d5a820d8146813f341b15dc.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$12.00</td></tr><tr id="cd78f519-1d5a-834d-8725-017f3ee21fa0"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Netflix%20cd78f5191d5a834d8725017f3ee21fa0.html"><img class="icon" src="Finance%20Tracker/Databases/Transactions/Netflix/6297647c7ec76b82fb21fce3.png"/>Netflix</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$12.00</td></tr><tr id="0768f519-1d5a-83ac-a1f3-8109098ada00"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%200768f5191d5a83aca1f38109098ada00.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$1,500.00</td></tr><tr id="0978f519-1d5a-8290-a92e-813511e1c9c7"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Salary%200978f5191d5a8290a92e813511e1c9c7.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/cash_gray.svg"/>Salary</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG">$5,500.00</td></tr><tr id="8e78f519-1d5a-833e-8b32-81fccd26bf5c"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Bonus%208e78f5191d5a833e8b3281fccd26bf5c.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/currency_gray.svg"/>Bonus</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG">$10,000.00</td></tr><tr id="7fb8f519-1d5a-82c0-8705-81dc5fe6e524"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%207fb8f5191d5a82c0870581dc5fe6e524.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$1,500.00</td></tr><tr id="6f68f519-1d5a-833d-a5d5-0133738539e7"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/Rent%206f68f5191d5a833da5d50133738539e7.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/home_gray.svg"/>Rent</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-pink">Expense</span></td><td class="cell-=pqG">-$1,500.00</td></tr><tr id="4568f519-1d5a-8346-ab6a-81b0fce6f7a2"><td class="cell-title"><a href="Finance%20Tracker/Databases/Transactions/New%20Income%204568f5191d5a8346ab6a81b0fce6f7a2.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/credit-card_gray.svg"/>New Income</a></td><td class="cell-UVnP"><span class="selected-value select-value-color-green">Income</span></td><td class="cell-=pqG"></td></tr></tbody></table></div><br/><br/></div></div></div></figure></div></div></div></div></div><div style="display:contents" dir="auto"><p id="dcc8f519-1d5a-834a-90be-014bbaa41019" class="">
+</p></div><div style="display:contents" dir="auto"><div id="4ef8f519-1d5a-82c2-9deb-0199bc7b004c" class="column-list"><div style="display:contents" dir="auto"><div id="61a8f519-1d5a-822e-9274-813208de0f2d" style="width:28.125%" class="column"><div style="display:contents" dir="ltr"><figure class="block-color-default_background callout" style="white-space:pre-wrap;display:flex" id="a9d8f519-1d5a-838b-948a-012d59f677ea"><div style="font-size:1.5em"><img class="icon notion-static-icon" src="https://app.notion.com/icons/database_gray.svg"/></div><div style="width:100%"><strong>Databases</strong><div style="display:contents" dir="auto"><ul id="2628f519-1d5a-830a-ba88-0178bea91876" class="toggle"><li><details open=""><summary><strong>Databases</strong></summary><div style="display:contents" dir="ltr"><figure class="block-color-red_background callout" style="white-space:pre-wrap;display:flex" id="6218f519-1d5a-83e1-b1f7-81af34db303d"><div style="width:100%"><div style="display:contents" dir="auto"><p id="bef8f519-1d5a-8334-90a1-81a8aeb95d48" class=""><mark class="highlight-red"><mark class="highlight-red_background"><code><strong>Do not delete the page below</strong></code></mark></mark></p></div></div></figure></div><div style="display:contents" dir="ltr"><figure id="f088f519-1d5a-8238-b48b-8153aa09d08a" class="link-to-page"><a href="Finance%20Tracker/Databases%20f088f5191d5a8238b48b8153aa09d08a.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/database_gray.svg"/>Databases</a></figure></div></details></li></ul></div><div style="display:contents" dir="ltr"><figure id="a4e8f519-1d5a-8261-a898-01d63723ef4b" class="link-to-page"><a href="Finance%20Tracker/Archived%20Pages%20a4e8f5191d5a8261a89801d63723ef4b.html"><img class="icon notion-static-icon" src="https://app.notion.com/icons/archive_gray.svg"/>Archived Pages</a></figure></div></div></figure></div></div></div><div style="display:contents" dir="auto"><div id="0258f519-1d5a-8236-96b7-0124763c8a75" style="width:21.874999999999996%" class="column"><div style="display:contents" dir="auto"><p id="11c8f519-1d5a-8395-ae92-01d7f027ae37" class="">
+</p></div></div></div><div style="display:contents" dir="auto"><div id="5a18f519-1d5a-83c8-83f5-81d9c6a6b725" style="width:25%" class="column"><div style="display:contents" dir="auto"><p id="2608f519-1d5a-8274-a463-01ba05303936" class="">
+</p></div></div></div><div style="display:contents" dir="auto"><div id="0a78f519-1d5a-8225-8a18-01480dfb7e7f" style="width:25%" class="column"><div style="display:contents" dir="auto"><p id="b7b8f519-1d5a-8240-aba4-81775e972116" class="">
+</p></div></div></div></div></div><div style="display:contents" dir="auto"><p id="6098f519-1d5a-83bf-bba0-8177bb045426" class="">
+</p></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
