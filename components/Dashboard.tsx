@@ -49,11 +49,12 @@ type QuickFields = {
   title: string; area: string; time: string; priority: Priority; dueDate: string;
   detail: string; color: string; note: string; amount: string; category: string;
   description: string; relation: string; notes: string;
+  status: "open" | "paused" | "archived"; effort: "light" | "medium" | "heavy";
 };
 const DEFAULT_QUICK_FIELDS: QuickFields = {
   title: "", area: "Personal", time: "15 min", priority: "medium", dueDate: "",
   detail: "", color: "coral", note: "", amount: "", category: "Groceries",
-  description: "", relation: "", notes: "",
+  description: "", relation: "", notes: "", status: "open", effort: "medium",
 };
 
 const DEFAULT_TASKS: Task[] = [
@@ -170,6 +171,13 @@ export default function Dashboard() {
     setQuickAddType("task");
   }
 
+  function moveToTomorrow(taskId: number) {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    const tStr = d.toISOString().split("T")[0];
+    setTasks(tasks.map((t) => t.id === taskId ? { ...t, scheduledDate: tStr } : t));
+    showToast("Moved to tomorrow");
+  }
+
   function handleQuickAdd(e: FormEvent) {
     e.preventDefault();
     const today = new Date().toISOString().split("T")[0];
@@ -177,7 +185,7 @@ export default function Dashboard() {
     switch (quickAddType) {
       case "task":
         if (!qf.title.trim()) return;
-        setTasks([...tasks, { id: Date.now(), title: qf.title.trim(), area: qf.area, time: qf.time, priority: qf.priority, done: false, dueDate: qf.dueDate || undefined }]);
+        setTasks([...tasks, { id: Date.now(), title: qf.title.trim(), area: qf.area, time: qf.time, priority: qf.priority, done: false, status: qf.status as "open" | "paused" | "archived", effort: qf.effort as "light" | "medium" | "heavy", dueDate: qf.dueDate || undefined }]);
         showToast("Task added");
         break;
       case "habit":
@@ -310,6 +318,7 @@ export default function Dashboard() {
               onToggleHabit={(id) => setHabits(habits.map((h) => h.id === id ? { ...h, done: !h.done } : h))}
               onNavigate={selectView}
               onAdd={() => setQuickAddOpen(true)}
+              onMoveToTomorrow={moveToTomorrow}
               money={money}
             />
           )}
@@ -445,23 +454,51 @@ export default function Dashboard() {
   );
 }
 
+/* ─── Journal-to-action keyword extraction ───────────────────────── */
+function extractJournalActions(entries: JournalEntry[]): string[] {
+  if (entries.length === 0) return [];
+  const keywords = ["need to", "should", "must", "have to", "follow up", "call", "email", "schedule", "book", "remind", "contact", "check on", "arrange", "sort out"];
+  const found: string[] = [];
+  const recent = [...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+  recent.forEach((entry) => {
+    entry.content.split(/[.!?\n]+/).forEach((sentence) => {
+      const s = sentence.trim();
+      if (s.length > 10 && s.length < 120 && keywords.some((kw) => s.toLowerCase().includes(kw))) {
+        found.push(s);
+      }
+    });
+  });
+  return [...new Set(found)].slice(0, 3);
+}
+
 /* ─── Today / Command View ───────────────────────────────────────── */
-function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, projects, people, progress, doneTasks, doneHabits, onToggleTask, onToggleHabit, onNavigate, onAdd, money }: {
+function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, projects, people, progress, doneTasks, doneHabits, onToggleTask, onToggleHabit, onNavigate, onAdd, onMoveToTomorrow, money }: {
   greeting: string; displayDate: string; firstName: string;
   tasks: Task[]; habits: Habit[]; journal: JournalEntry[]; projects: Project[]; people: Person[];
   progress: number; doneTasks: number; doneHabits: number; money: MoneyData;
   onToggleTask: (id: number) => void; onToggleHabit: (id: number) => void;
-  onNavigate: (v: View) => void; onAdd: () => void;
+  onNavigate: (v: View) => void; onAdd: () => void; onMoveToTomorrow: (id: number) => void;
 }) {
   const today = new Date().toISOString().split("T")[0];
+  const tomorrowStr = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split("T")[0]; })();
+  const in7DaysStr = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split("T")[0]; })();
+
   const todayEntry = journal.find((e) => e.date === today);
   const latestEntry = [...journal].sort((a, b) => b.date.localeCompare(a.date))[0];
 
   const totalBalance = money.accounts.reduce((s, a) => s + a.balance, 0);
   const totalExpenses = money.expenses.reduce((s, e) => s + e.amount, 0);
   const recurringExpenses = money.expenses.filter((e) => e.recurring).reduce((s, e) => s + e.amount, 0);
+  const totalDebt = money.loans?.reduce((s, l) => s + l.balance, 0) ?? 0;
 
-  const openTasks = tasks.filter((t) => !t.done);
+  // Three distinct scores
+  const momentumScore = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+  const rhythmScore = habits.length > 0 ? Math.round((doneHabits / habits.length) * 100) : 0;
+  const signalScore = Math.min(100, Math.round((momentumScore + rhythmScore) / 2 + (todayEntry ? 5 : 0)));
+
+  // Active tasks only — exclude paused and archived from command view
+  const openTasks = tasks.filter((t) => !t.done && t.status !== "paused" && t.status !== "archived");
+  const pausedArchived = tasks.filter((t) => t.status === "paused" || t.status === "archived");
   const doneTasks_list = tasks.filter((t) => t.done);
   const doneHabits_list = habits.filter((h) => h.done);
   const missedHabits = habits.filter((h) => !h.done);
@@ -475,10 +512,25 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
   const mainFocus = top3[0];
   const activeProjects = projects.filter((p) => p.status === "active");
 
+  // Calendar-lite: tasks with a scheduledDate
+  const scheduledToday = tasks.filter((t) => !t.done && t.scheduledDate === today);
+  const scheduledTomorrow = tasks.filter((t) => !t.done && t.scheduledDate === tomorrowStr);
+  const scheduledUpcoming = tasks.filter((t) => !t.done && t.scheduledDate && t.scheduledDate > tomorrowStr && t.scheduledDate <= in7DaysStr);
+  const hasScheduled = scheduledToday.length + scheduledTomorrow.length + scheduledUpcoming.length > 0;
+
+  // Journal-to-action extraction
+  const journalActions = extractJournalActions(journal);
+
   type AttentionItem = { id: string; label: string; source: string; urgency: "critical" | "warning"; action: () => void };
   const attentionItems: AttentionItem[] = [
+    ...openTasks.filter((t) => t.priority === "critical").map((t) => ({
+      id: `task-c-${t.id}`, label: t.title, source: "Tasks — Critical", urgency: "critical" as const, action: () => onNavigate("tasks"),
+    })),
     ...openTasks.filter((t) => t.priority === "high").map((t) => ({
       id: `task-${t.id}`, label: t.title, source: "Tasks", urgency: "critical" as const, action: () => onNavigate("tasks"),
+    })),
+    ...openTasks.filter((t) => t.riskFlag).map((t) => ({
+      id: `risk-${t.id}`, label: `⚑ ${t.title}`, source: "Risk flagged", urgency: "critical" as const, action: () => onNavigate("tasks"),
     })),
     ...missedHabits.map((h) => ({
       id: `habit-${h.id}`, label: `${h.name} not done today`, source: "Habits", urgency: "warning" as const, action: () => onNavigate("habits"),
@@ -489,11 +541,15 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
     ...people.filter((p) => p.notes?.toLowerCase().includes("follow up") || p.notes?.toLowerCase().includes("birthday")).map((p) => ({
       id: `person-${p.id}`, label: `${p.name} — ${p.notes}`, source: "People", urgency: "warning" as const, action: () => onNavigate("people"),
     })),
+    ...journalActions.map((action, i) => ({
+      id: `jaction-${i}`, label: action, source: "Journal — possible action", urgency: "warning" as const, action: () => onNavigate("journal"),
+    })),
   ];
 
   const ignoreItems = [
     ...doneTasks_list.map((t) => ({ id: `t-${t.id}`, label: t.title, source: "Task complete" })),
     ...doneHabits_list.map((h) => ({ id: `h-${h.id}`, label: h.name, source: "Habit done" })),
+    ...pausedArchived.map((t) => ({ id: `pa-${t.id}`, label: t.title, source: t.status === "paused" ? "Paused" : "Archived" })),
   ];
 
   const rhythmStatus = doneHabits === habits.length && habits.length > 0
@@ -501,6 +557,19 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
   const rhythmColor = doneHabits === habits.length && habits.length > 0
     ? "#60836b" : doneHabits > habits.length / 2 ? "#b87c3e" : "#c0392b";
   const cashflowWarning = totalExpenses > money.salary * 0.8;
+
+  // Money reality check
+  const spendingPressure = money.salary > 0 ? Math.round((totalExpenses / money.salary) * 100) : 0;
+  const monthsRunway = money.salary > 0 ? (totalBalance / money.salary).toFixed(1) : "—";
+  const realitySignal = spendingPressure > 90
+    ? { text: "Spending exceeds 90% of income — review fixed costs now", level: "critical" }
+    : spendingPressure > 75
+    ? { text: "High spending pressure — review discretionary spend", level: "warning" }
+    : totalDebt > 0 && totalDebt > totalBalance
+    ? { text: "Debt exceeds liquid balance — prioritise reduction", level: "warning" }
+    : money.goals.length === 0
+    ? { text: "No savings goal set — consider adding one", level: "info" }
+    : { text: "Financial position looks stable. Keep monitoring.", level: "ok" };
 
   return (
     <>
@@ -518,20 +587,38 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
             </h1>
             <p style={{ margin: "0 0 18px", color: "#8a9087", fontSize: 13 }}>No Noise. Just Signal.</p>
             {mainFocus ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ padding: "5px 10px", borderRadius: 8, background: "rgba(201,152,10,.15)", border: "1px solid rgba(201,152,10,.3)", color: "var(--gold-light)", fontSize: 10, fontWeight: 750, textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Main focus</span>
-                <span style={{ fontSize: 13, color: "#e8e6df" }}>{mainFocus.title}</span>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: mainFocus.nextAction ? 6 : 0 }}>
+                  <span style={{ padding: "5px 10px", borderRadius: 8, background: "rgba(201,152,10,.15)", border: "1px solid rgba(201,152,10,.3)", color: "var(--gold-light)", fontSize: 10, fontWeight: 750, textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Main focus</span>
+                  <span style={{ fontSize: 13, color: "#e8e6df" }}>{mainFocus.title}</span>
+                </div>
+                {mainFocus.nextAction && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                    <span style={{ fontSize: 9, padding: "3px 8px", borderRadius: 6, background: "rgba(230,110,82,.15)", color: "var(--accent)", fontWeight: 750, textTransform: "uppercase", letterSpacing: 0.8, flexShrink: 0 }}>Next action</span>
+                    <span style={{ fontSize: 11, color: "#a8a69f" }}>{mainFocus.nextAction}</span>
+                  </div>
+                )}
               </div>
             ) : (
               <span style={{ fontSize: 13, color: "#8a9087" }}>All clear — nothing critical today.</span>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <div style={{ "--progress": `${progress * 3.6}deg`, width: 58, height: 58, display: "grid", placeItems: "center", borderRadius: "50%", background: "conic-gradient(var(--gold) var(--progress), #2f3830 0)", position: "relative" } as React.CSSProperties}>
-              <div style={{ position: "absolute", inset: 7, borderRadius: "50%", background: "#1a1f1b" }} />
-              <span style={{ zIndex: 1, fontSize: 11, fontWeight: 800, color: "#f3f2ed", position: "relative" }}>{progress}%</span>
-            </div>
-            <span style={{ fontSize: 9, fontWeight: 750, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase" }}>Signal</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0, minWidth: 120 }}>
+            {([
+              { label: "Momentum", score: momentumScore, color: "var(--accent)" },
+              { label: "Rhythm", score: rhythmScore, color: "#60836b" },
+              { label: "Signal", score: signalScore, color: "var(--gold)" },
+            ] as { label: string; score: number; color: string }[]).map(({ label, score, color }) => (
+              <div key={label}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                  <span style={{ fontSize: 8, fontWeight: 750, color: "#8a9087", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, color }}>{score}%</span>
+                </div>
+                <div style={{ height: 4, borderRadius: 4, background: "#2f3830", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${score}%`, background: color, borderRadius: 4, transition: "width .4s ease" }} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div style={{ position: "absolute", right: -40, top: -40, width: 200, height: 200, borderRadius: "50%", border: "1px solid rgba(201,152,10,.07)", pointerEvents: "none" }} />
@@ -557,6 +644,7 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
                 <strong style={{ display: "block", fontSize: 12, fontWeight: 650, lineHeight: 1.4, marginBottom: 8, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--muted)" : "var(--text)" }}>{task.title}</strong>
                 <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                   <span className={`priority ${task.priority}`}>{task.priority}</span>
+                  {task.effort && <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 5, background: "var(--line)", color: "var(--muted)", fontWeight: 700 }}>{task.effort}</span>}
                   <span style={{ color: "var(--muted)", fontSize: 9 }}>{task.time}</span>
                   {task.dueDate && <span style={{ fontSize: 9, color: "var(--accent-dark)", fontWeight: 700 }}>Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</span>}
                 </div>
@@ -636,6 +724,52 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
         </section>
       )}
 
+      {/* 5b — Calendar-lite */}
+      {hasScheduled && (
+        <section style={{ marginBottom: 14, padding: "16px 18px", borderRadius: 14, background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <CalendarDays size={14} style={{ color: "var(--accent-dark)", flexShrink: 0 }} />
+            <span style={{ fontSize: 10, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>Scheduled</span>
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {scheduledToday.length > 0 && (
+              <div>
+                <span style={{ fontSize: 8, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: 1 }}>Today</span>
+                {scheduledToday.map((t) => (
+                  <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--line)" }}>
+                    <span style={{ fontSize: 11, flex: 1 }}>{t.title}</span>
+                    <span style={{ fontSize: 9, color: "var(--muted)" }}>{t.time}</span>
+                    <button onClick={() => onMoveToTomorrow(t.id)} style={{ fontSize: 9, padding: "2px 7px", borderRadius: 5, border: "1px solid var(--line)", background: "none", color: "var(--muted)", cursor: "pointer" }}>→ Tomorrow</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {scheduledTomorrow.length > 0 && (
+              <div>
+                <span style={{ fontSize: 8, fontWeight: 800, color: "#b87c3e", textTransform: "uppercase", letterSpacing: 1 }}>Tomorrow</span>
+                {scheduledTomorrow.map((t) => (
+                  <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--line)" }}>
+                    <span style={{ fontSize: 11, flex: 1 }}>{t.title}</span>
+                    <span style={{ fontSize: 9, color: "var(--muted)" }}>{t.time}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {scheduledUpcoming.length > 0 && (
+              <div>
+                <span style={{ fontSize: 8, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>Next 7 days</span>
+                {scheduledUpcoming.map((t) => (
+                  <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--line)" }}>
+                    <span style={{ fontSize: 11, flex: 1 }}>{t.title}</span>
+                    <span style={{ fontSize: 9, color: "var(--muted)" }}>{t.scheduledDate}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* 6 + 7 — Money Snapshot + Rhythm Snapshot */}
       <div className="signal-two-col">
         <section className="panel" style={{ padding: 22 }}>
@@ -657,11 +791,25 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
               </div>
             ))}
           </div>
-          {cashflowWarning && (
-            <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(192,57,43,.07)", border: "1px solid rgba(192,57,43,.15)", fontSize: 11, color: "#c0392b" }}>
-              Spending exceeds 80% of monthly income
+          {/* Money Reality Check */}
+          <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: realitySignal.level === "critical" ? "rgba(192,57,43,.07)" : realitySignal.level === "warning" ? "rgba(212,168,68,.07)" : "var(--surface-2)", border: `1px solid ${realitySignal.level === "critical" ? "rgba(192,57,43,.2)" : realitySignal.level === "warning" ? "rgba(212,168,68,.2)" : "var(--line)"}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: realitySignal.level === "critical" ? "#c0392b" : realitySignal.level === "warning" ? "#b87c3e" : "var(--muted)" }}>Reality Check</span>
+              <span style={{ fontSize: 9, color: "var(--muted)" }}>Runway: {monthsRunway}mo</span>
             </div>
-          )}
+            <div style={{ fontSize: 11, fontWeight: 600, color: realitySignal.level === "critical" ? "#c0392b" : realitySignal.level === "warning" ? "#b87c3e" : "var(--muted)" }}>{realitySignal.text}</div>
+            {money.salary > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 9, color: "var(--muted)" }}>Spending pressure</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: spendingPressure > 90 ? "#c0392b" : spendingPressure > 75 ? "#b87c3e" : "var(--green)" }}>{spendingPressure}%</span>
+                </div>
+                <div style={{ height: 4, borderRadius: 4, background: "var(--line)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(100, spendingPressure)}%`, background: spendingPressure > 90 ? "#c0392b" : spendingPressure > 75 ? "#b87c3e" : "var(--green)", borderRadius: 4 }} />
+                </div>
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="panel" style={{ padding: 22 }}>
