@@ -36,7 +36,7 @@ export default function RegisterPage() {
           <MjwLogo size={88} />
         </div>
         <h1 className="login-title">Create account</h1>
-        <p className="login-sub">Join MJW Tracker</p>
+        <p className="login-sub">Join MJW Signal</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">

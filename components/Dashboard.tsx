@@ -177,7 +177,7 @@ export default function Dashboard() {
         <div className="brand-row">
           <button className="brand" onClick={() => selectView("today")} aria-label="Go home">
             <MjwLogo size={30} />
-            <span style={{ fontSize: 13, letterSpacing: "-.2px", fontWeight: 700 }}>MJW Tracker</span>
+            <span style={{ fontSize: 13, letterSpacing: "-.2px", fontWeight: 700 }}>MJW Signal</span>
           </button>
           <button className="icon-btn mobile-close" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
             <X size={19} />
@@ -205,7 +205,7 @@ export default function Dashboard() {
         <div className="profile-card" style={{ paddingTop: 14 }}>
           <span className="profile-copy">
             <strong>{displayName}</strong>
-            <small>MJW Tracker</small>
+            <small>MJW Signal</small>
           </span>
           <MoreHorizontal size={18} />
         </div>
@@ -229,7 +229,7 @@ export default function Dashboard() {
               <Bell size={19} /><span />
             </button>
             <button className="primary-btn" onClick={() => setQuickAddOpen(true)}>
-              <Plus size={17} /><span>Add task</span>
+              <Plus size={17} /><span>Quick add</span>
             </button>
           </div>
         </header>
@@ -301,7 +301,7 @@ export default function Dashboard() {
   );
 }
 
-/* ─── Today View ─────────────────────────────────────────────────── */
+/* ─── Today / Command View ───────────────────────────────────────── */
 function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, projects, people, progress, doneTasks, doneHabits, onToggleTask, onToggleHabit, onNavigate, onAdd, money }: {
   greeting: string; displayDate: string; firstName: string;
   tasks: Task[]; habits: Habit[]; journal: JournalEntry[]; projects: Project[]; people: Person[];
@@ -311,127 +311,249 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
 }) {
   const today = new Date().toISOString().split("T")[0];
   const todayEntry = journal.find((e) => e.date === today);
+  const latestEntry = [...journal].sort((a, b) => b.date.localeCompare(a.date))[0];
+
   const totalBalance = money.accounts.reduce((s, a) => s + a.balance, 0);
+  const totalExpenses = money.expenses.reduce((s, e) => s + e.amount, 0);
+  const recurringExpenses = money.expenses.filter((e) => e.recurring).reduce((s, e) => s + e.amount, 0);
+
+  const openTasks = tasks.filter((t) => !t.done);
+  const doneTasks_list = tasks.filter((t) => t.done);
+  const doneHabits_list = habits.filter((h) => h.done);
+  const missedHabits = habits.filter((h) => !h.done);
+
+  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sortedOpen = [...openTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const top3 = sortedOpen.slice(0, 3);
+  const top3Ids = new Set(top3.map((t) => t.id));
+  const canWait = sortedOpen.filter((t) => !top3Ids.has(t.id)).slice(0, 5);
+
+  const mainFocus = top3[0];
   const activeProjects = projects.filter((p) => p.status === "active");
+
+  type AttentionItem = { id: string; label: string; source: string; urgency: "critical" | "warning"; action: () => void };
+  const attentionItems: AttentionItem[] = [
+    ...openTasks.filter((t) => t.priority === "high").map((t) => ({
+      id: `task-${t.id}`, label: t.title, source: "Tasks", urgency: "critical" as const, action: () => onNavigate("tasks"),
+    })),
+    ...missedHabits.map((h) => ({
+      id: `habit-${h.id}`, label: `${h.name} not done today`, source: "Habits", urgency: "warning" as const, action: () => onNavigate("habits"),
+    })),
+    ...activeProjects.filter((p) => p.tasks.length > 0 && p.tasks.every((t) => t.done)).map((p) => ({
+      id: `proj-${p.id}`, label: `${p.name} — needs a next action`, source: "Projects", urgency: "warning" as const, action: () => onNavigate("projects"),
+    })),
+    ...people.filter((p) => p.notes?.toLowerCase().includes("follow up") || p.notes?.toLowerCase().includes("birthday")).map((p) => ({
+      id: `person-${p.id}`, label: `${p.name} — ${p.notes}`, source: "People", urgency: "warning" as const, action: () => onNavigate("people"),
+    })),
+  ];
+
+  const ignoreItems = [
+    ...doneTasks_list.map((t) => ({ id: `t-${t.id}`, label: t.title, source: "Task complete" })),
+    ...doneHabits_list.map((h) => ({ id: `h-${h.id}`, label: h.name, source: "Habit done" })),
+  ];
+
+  const rhythmStatus = doneHabits === habits.length && habits.length > 0
+    ? "Strong" : doneHabits > habits.length / 2 ? "Building" : habits.length > 0 ? "Needs attention" : "Set habits";
+  const rhythmColor = doneHabits === habits.length && habits.length > 0
+    ? "#60836b" : doneHabits > habits.length / 2 ? "#b87c3e" : "#c0392b";
+  const cashflowWarning = totalExpenses > money.salary * 0.8;
 
   return (
     <>
-      {/* Welcome row */}
-      <section className="welcome-row">
-        <div>
-          <span className="eyebrow">{displayDate}</span>
-          <h1>{greeting}, {firstName}.</h1>
-          <p>Here's the shape of your day. Keep it light and move one thing forward.</p>
-        </div>
-        <div className="day-score">
-          <div className="score-ring" style={{ "--progress": `${progress * 3.6}deg` } as React.CSSProperties}>
-            <span>{progress}%</span>
+      {/* 1 — Signal Command Card */}
+      <section style={{
+        padding: "24px 28px", marginBottom: 16, borderRadius: 20,
+        background: "linear-gradient(135deg, #1a1f1b 0%, #242922 100%)",
+        border: "1px solid #2f3830", color: "#f3f2ed", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, position: "relative", zIndex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", color: "var(--gold)", fontSize: 10, fontWeight: 780, letterSpacing: "1.4px", textTransform: "uppercase", marginBottom: 8 }}>{displayDate}</span>
+            <h1 style={{ margin: "0 0 4px", fontFamily: "Georgia, serif", fontSize: "clamp(20px, 2.5vw, 30px)", fontWeight: 500, letterSpacing: "-1px", color: "#f3f2ed" }}>
+              {greeting}, {firstName}.
+            </h1>
+            <p style={{ margin: "0 0 18px", color: "#8a9087", fontSize: 13 }}>No Noise. Just Signal.</p>
+            {mainFocus ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ padding: "5px 10px", borderRadius: 8, background: "rgba(201,152,10,.15)", border: "1px solid rgba(201,152,10,.3)", color: "var(--gold-light)", fontSize: 10, fontWeight: 750, textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Main focus</span>
+                <span style={{ fontSize: 13, color: "#e8e6df" }}>{mainFocus.title}</span>
+              </div>
+            ) : (
+              <span style={{ fontSize: 13, color: "#8a9087" }}>All clear — nothing critical today.</span>
+            )}
           </div>
-          <div><strong>Day score</strong><small>{progress > 70 ? "A strong day" : "Plenty of room"}</small></div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <div style={{ "--progress": `${progress * 3.6}deg`, width: 58, height: 58, display: "grid", placeItems: "center", borderRadius: "50%", background: "conic-gradient(var(--gold) var(--progress), #2f3830 0)", position: "relative" } as React.CSSProperties}>
+              <div style={{ position: "absolute", inset: 7, borderRadius: "50%", background: "#1a1f1b" }} />
+              <span style={{ zIndex: 1, fontSize: 11, fontWeight: 800, color: "#f3f2ed", position: "relative" }}>{progress}%</span>
+            </div>
+            <span style={{ fontSize: 9, fontWeight: 750, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase" }}>Signal</span>
+          </div>
         </div>
+        <div style={{ position: "absolute", right: -40, top: -40, width: 200, height: 200, borderRadius: "50%", border: "1px solid rgba(201,152,10,.07)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: -80, top: -80, width: 300, height: 300, borderRadius: "50%", border: "1px solid rgba(201,152,10,.04)", pointerEvents: "none" }} />
       </section>
 
-      {/* Stat cards */}
-      <section className="stat-grid" style={{ marginBottom: 16 }}>
-        <article className="stat-card peach" style={{ cursor: "pointer" }} onClick={() => onNavigate("tasks")}>
-          <div className="stat-icon"><ListTodo size={20} /></div>
-          <div><span>Tasks today</span><strong>{tasks.length - doneTasks}<small> remaining</small></strong><p>{doneTasks} complete</p></div>
-          <MiniTrend up />
-        </article>
-        <article className="stat-card lilac" style={{ cursor: "pointer" }} onClick={() => onNavigate("habits")}>
-          <div className="stat-icon"><Flame size={20} /></div>
-          <div><span>Habit rhythm</span><strong>{doneHabits}<small> of {habits.length}</small></strong><p>Keep the streak alive</p></div>
-          <MiniTrend up />
-        </article>
-        <article className="stat-card mint" style={{ cursor: "pointer" }} onClick={() => onNavigate("money")}>
-          <div className="stat-icon"><CircleDollarSign size={20} /></div>
-          <div><span>Total balance</span><strong>R {Math.round(totalBalance / 1000)}k</strong><p>{money.accounts.length} accounts</p></div>
-          <MiniTrend />
-        </article>
-        <article className="stat-card sky" style={{ cursor: "pointer" }} onClick={() => onNavigate("journal")}>
-          <div className="stat-icon"><BookOpen size={20} /></div>
-          <div><span>Journal</span><strong>{journal.length}<small> entries</small></strong><p>{todayEntry ? "Written today ✓" : "Not written yet"}</p></div>
-          <MiniTrend up />
-        </article>
-      </section>
-
-      {/* ── Main grid: 2 equal columns ─────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-
-        {/* LEFT col: Today's Focus */}
-        <section className="panel" style={{ padding: 22 }}>
-          <PanelHead title="Today's focus" subtitle={`${doneTasks} of ${tasks.length} tasks done`} action="View all" onClick={() => onNavigate("tasks")} />
-          <div className="task-list">
-            {tasks.slice(0, 6).map((task) => (
-              <div key={task.id} className={task.done ? "task-row done" : "task-row"}>
-                <button className="check-btn" onClick={() => onToggleTask(task.id)}>{task.done ? <Check size={15} /> : null}</button>
-                <div className="task-copy"><strong>{task.title}</strong><span>{task.area}<i />{task.time}</span></div>
-                <span className={`priority ${task.priority}`}>{task.priority}</span>
+      {/* 2 — Top 3 Focus Items */}
+      <section className="panel" style={{ padding: 22, marginBottom: 14 }}>
+        <PanelHead title="Top 3 focus" subtitle={`${openTasks.length} open task${openTasks.length !== 1 ? "s" : ""} — showing highest priority`} action="All tasks" onClick={() => onNavigate("tasks")} />
+        {top3.length === 0 ? (
+          <p style={{ color: "var(--muted)", fontSize: 12, margin: "4px 0 0" }}>No open tasks. Add something to focus on today.</p>
+        ) : (
+          <div className="signal-focus-grid">
+            {top3.map((task, i) => (
+              <div key={task.id} style={{ padding: "14px 16px", borderRadius: 14, background: "var(--surface-2)", border: "1px solid var(--line)", position: "relative", opacity: task.done ? 0.5 : 1 }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, borderRadius: "14px 14px 0 0", background: task.priority === "high" ? "var(--accent)" : task.priority === "medium" ? "#9c8db2" : "var(--green)" }} />
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 9, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>#{i + 1} · {task.area}</span>
+                  <button onClick={() => onToggleTask(task.id)} style={{ width: 20, height: 20, display: "grid", placeItems: "center", padding: 0, border: task.done ? "none" : "1.5px solid #c8cac5", borderRadius: 6, background: task.done ? "var(--green)" : "transparent", color: "white", cursor: "pointer", flexShrink: 0 }}>
+                    {task.done ? <Check size={13} /> : null}
+                  </button>
+                </div>
+                <strong style={{ display: "block", fontSize: 12, fontWeight: 650, lineHeight: 1.4, marginBottom: 8, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--muted)" : "var(--text)" }}>{task.title}</strong>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span className={`priority ${task.priority}`}>{task.priority}</span>
+                  <span style={{ color: "var(--muted)", fontSize: 9 }}>{task.time}</span>
+                </div>
               </div>
             ))}
           </div>
-          <button className="add-row" onClick={onAdd}><Plus size={17} />Add a task</button>
-        </section>
+        )}
+        <button className="add-row" onClick={onAdd} style={{ marginTop: 14 }}><Plus size={17} />Quick add</button>
+      </section>
 
-        {/* RIGHT col: Daily Insight (top) + Daily Rhythm (half height, bottom) */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-
-          {/* Daily Insight */}
-          <section className="panel insight-panel" style={{ flex: "0 0 auto" }}>
-            <div className="insight-icon"><Sparkles size={20} /></div>
-            <div>
-              <span className="eyebrow">Daily insight</span>
-              <h3>{todayEntry ? "Journal entry complete." : "Haven't journaled today."}</h3>
-              <p>{todayEntry ? "Your thoughts are captured. Come back to reflect anytime." : "Writing just 5 minutes builds clarity and reduces stress."}</p>
-              <button onClick={() => onNavigate("journal")}>
-                {todayEntry ? "Read entry" : "Start writing"} <ChevronRight size={16} />
-              </button>
-            </div>
-          </section>
-
-          {/* Daily Rhythm — compact / half height */}
-          <section className="panel" style={{ padding: "16px 20px", flex: "1 1 auto" }}>
-            <PanelHead title="Daily rhythm" subtitle={`${doneHabits} of ${habits.length} checked in`} action="Habits" onClick={() => onNavigate("habits")} />
-            <div style={{ display: "grid", gap: 4 }}>
-              {habits.map((habit) => (
-                <button key={habit.id} className="habit-row" onClick={() => onToggleHabit(habit.id)} style={{ minHeight: 44 }}>
-                  <span className={`habit-dot ${habit.color}`} style={{ width: 24, height: 24, borderRadius: 7 }}>{habit.done ? <Check size={12} /> : null}</span>
-                  <span style={{ flex: 1, textAlign: "left" }}><strong style={{ fontSize: 11 }}>{habit.name}</strong><small style={{ display: "block", fontSize: 9 }}>{habit.detail}</small></span>
-                  <span className={habit.done ? "habit-check checked" : "habit-check"} style={{ width: 18, height: 18 }}>{habit.done ? <Check size={12} /> : null}</span>
+      {/* 3 + 4 — Attention Required + What Can Wait */}
+      <div className="signal-two-col">
+        <section className="panel" style={{ padding: 22 }}>
+          <PanelHead title="Attention required" subtitle={attentionItems.length === 0 ? "All clear" : `${attentionItems.length} item${attentionItems.length !== 1 ? "s" : ""} need review`} />
+          {attentionItems.length === 0 ? (
+            <p style={{ color: "var(--muted)", fontSize: 12, margin: "4px 0 0" }}>Nothing critical right now.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
+              {attentionItems.map((item) => (
+                <button key={item.id} className="attention-item" onClick={item.action} style={{ borderLeft: `3px solid ${item.urgency === "critical" ? "var(--accent)" : "#d4a844"}`, background: item.urgency === "critical" ? "rgba(230,110,82,.06)" : "rgba(212,168,68,.06)" }}>
+                  <div style={{ flex: 1, textAlign: "left" }}>
+                    <strong style={{ display: "block", fontSize: 11, color: "var(--text)" }}>{item.label}</strong>
+                    <span style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.8 }}>{item.source}</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />
                 </button>
               ))}
             </div>
-          </section>
-        </div>
+          )}
+        </section>
+
+        <section className="panel" style={{ padding: 22 }}>
+          <PanelHead title="What can wait" subtitle="Lower priority — no action needed today" />
+          {canWait.length === 0 ? (
+            <p style={{ color: "var(--muted)", fontSize: 12, margin: "4px 0 0" }}>No deferred items.</p>
+          ) : (
+            <div style={{ marginTop: 4 }}>
+              {canWait.map((task) => (
+                <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
+                  <span style={{ fontSize: 8, padding: "3px 7px", borderRadius: 6, background: "var(--surface-2)", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, flexShrink: 0 }}>{task.priority}</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)", flex: 1 }}>{task.title}</span>
+                  <span style={{ fontSize: 9, color: "var(--muted)", flexShrink: 0 }}>{task.time}</span>
+                </div>
+              ))}
+              <button onClick={() => onNavigate("tasks")} style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 12, padding: "5px 0", border: 0, color: "var(--accent-dark)", background: "none", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                View all tasks <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Money at a Glance — full width */}
-      <section className="panel" style={{ padding: 22, marginBottom: 14 }}>
-        <PanelHead title="Money at a glance" subtitle={new Intl.DateTimeFormat("en-ZA", { month: "long", year: "numeric" }).format(new Date())} action="Details" onClick={() => onNavigate("money")} />
-        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 24, alignItems: "center" }}>
-          <div>
+      {/* 5 — What Can Be Ignored */}
+      {ignoreItems.length > 0 && (
+        <section style={{ marginBottom: 14, padding: "14px 18px", borderRadius: 14, background: "var(--surface-2)", border: "1px solid var(--line)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>What can be ignored today</span>
+            <span style={{ padding: "2px 8px", borderRadius: 10, background: "var(--line)", fontSize: 9, color: "var(--muted)" }}>{ignoreItems.length}</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {ignoreItems.slice(0, 8).map((item) => (
+              <span key={item.id} className="ignore-pill">{item.label} <span style={{ fontSize: 8, opacity: 0.6 }}>· {item.source}</span></span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 6 + 7 — Money Snapshot + Rhythm Snapshot */}
+      <div className="signal-two-col">
+        <section className="panel" style={{ padding: 22 }}>
+          <PanelHead title="Money snapshot" subtitle={new Intl.DateTimeFormat("en-ZA", { month: "long", year: "numeric" }).format(new Date())} action="Details" onClick={() => onNavigate("money")} />
+          <div style={{ marginBottom: 14 }}>
             <span style={{ color: "var(--muted)", fontSize: 10 }}>Total balance</span>
-            <strong style={{ display: "block", fontFamily: "Georgia,serif", fontSize: 28, letterSpacing: "-.6px" }}>R {totalBalance.toLocaleString("en-ZA")}</strong>
+            <strong style={{ display: "block", fontFamily: "Georgia,serif", fontSize: 26, letterSpacing: "-.6px", marginTop: 2 }}>R {totalBalance.toLocaleString("en-ZA")}</strong>
           </div>
-          <div className="chart-wrap" style={{ height: 60, margin: 0 }}>
-            <svg viewBox="0 0 520 80" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
-              <defs><linearGradient id="area3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#769a80" stopOpacity=".3" /><stop offset="1" stopColor="#769a80" stopOpacity="0" /></linearGradient></defs>
-              <path d="M0 68 C60 56 70 62 110 46 S175 54 215 34 S280 44 325 22 S395 34 430 12 S490 16 520 4 L520 80 L0 80 Z" fill="url(#area3)" />
-              <path d="M0 68 C60 56 70 62 110 46 S175 54 215 34 S280 44 325 22 S395 34 430 12 S490 16 520 4" fill="none" stroke="#6f9379" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
+          <div>
+            {[
+              { label: "Monthly income", value: `R ${money.salary.toLocaleString("en-ZA")}`, color: "var(--green)" },
+              { label: "Monthly spend", value: `R ${totalExpenses.toLocaleString("en-ZA")}`, color: cashflowWarning ? "#c0392b" : "var(--text)" },
+              { label: "Recurring", value: `R ${recurringExpenses.toLocaleString("en-ZA")}`, color: "var(--muted)" },
+              { label: "Savings goals", value: `${money.goals?.length ?? 0} active`, color: "var(--muted)" },
+            ].map((row) => (
+              <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--line)", fontSize: 11 }}>
+                <span style={{ color: "var(--muted)" }}>{row.label}</span>
+                <strong style={{ color: row.color }}>{row.value}</strong>
+              </div>
+            ))}
           </div>
-          <div className="money-summary" style={{ gridTemplateColumns: "1fr", gap: 8, padding: 0, border: 0 }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 11 }}><span className="dot income" />Income <strong>R {money.salary.toLocaleString("en-ZA")}</strong></div>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 11 }}><span className="dot expense" />Expenses <strong>R {money.expenses.reduce((s, e) => s + e.amount, 0).toLocaleString("en-ZA")}</strong></div>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 11 }}><span className="dot saved" />Goals <strong>{money.goals.length} active</strong></div>
+          {cashflowWarning && (
+            <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(192,57,43,.07)", border: "1px solid rgba(192,57,43,.15)", fontSize: 11, color: "#c0392b" }}>
+              Spending exceeds 80% of monthly income
+            </div>
+          )}
+        </section>
+
+        <section className="panel" style={{ padding: 22 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+            <div>
+              <h2 style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 500, letterSpacing: "-.35px" }}>Rhythm</h2>
+              <p style={{ margin: "5px 0 0", color: "var(--muted)", fontSize: 10 }}>{doneHabits} of {habits.length} habits checked in</p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 750, color: rhythmColor }}>{rhythmStatus}</span>
+              <button onClick={() => onNavigate("habits")} style={{ display: "flex", alignItems: "center", gap: 2, padding: "5px 0", border: 0, color: "var(--accent-dark)", background: "none", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Habits <ChevronRight size={14} /></button>
+            </div>
           </div>
+          <div>
+            {habits.map((habit) => (
+              <button key={habit.id} onClick={() => onToggleHabit(habit.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", border: 0, borderBottom: "1px solid var(--line)", background: "none", textAlign: "left", cursor: "pointer", width: "100%" }}>
+                <span className={`habit-dot ${habit.color}`} style={{ width: 24, height: 24, borderRadius: 7, flexShrink: 0, display: "grid", placeItems: "center" }}>{habit.done ? <Check size={12} /> : null}</span>
+                <span style={{ flex: 1 }}>
+                  <strong style={{ display: "block", fontSize: 11 }}>{habit.name}</strong>
+                  <small style={{ display: "block", fontSize: 9, color: "var(--muted)", marginTop: 2 }}>{habit.detail}{habit.streak > 0 ? ` · ${habit.streak}d streak` : ""}</small>
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: habit.done ? "var(--green)" : "var(--muted)" }}>{habit.done ? "Done" : "Pending"}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* 8 — Journal Insight */}
+      <section className="panel insight-panel" style={{ padding: 22, marginBottom: 14 }}>
+        <div className="insight-icon"><Sparkles size={20} /></div>
+        <div style={{ flex: 1 }}>
+          <span className="eyebrow">Journal insight</span>
+          <h3>{latestEntry ? `Last entry: ${new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(latestEntry.date))}` : "No journal entries yet."}</h3>
+          <p>
+            {todayEntry
+              ? "Today's thoughts are captured. Reflection builds clarity over time."
+              : latestEntry
+              ? "You haven't written today. Even 3 sentences builds momentum."
+              : "Start your journal to build a record of thoughts, decisions, and patterns."}
+          </p>
+          <button onClick={() => onNavigate("journal")}>
+            {todayEntry ? "Read today's entry" : "Write now"} <ChevronRight size={16} />
+          </button>
         </div>
       </section>
 
-      {/* ── Bottom 50/50 grid ──────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-
-        {/* In Motion */}
+      {/* In Motion + People */}
+      <div className="signal-bottom-grid">
         <section className="panel" style={{ padding: 22 }}>
           <PanelHead title="In motion" subtitle={`${activeProjects.length} active project${activeProjects.length !== 1 ? "s" : ""}`} action="Projects" onClick={() => onNavigate("projects")} />
           {activeProjects.length === 0 ? (
@@ -454,9 +576,8 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
           )}
         </section>
 
-        {/* People to remember */}
         <section className="panel" style={{ padding: 22 }}>
-          <PanelHead title="People to remember" subtitle="Small gestures, right on time" action="People" onClick={() => onNavigate("people")} />
+          <PanelHead title="People" subtitle="Stay connected" action="People" onClick={() => onNavigate("people")} />
           {people.length === 0 ? (
             <p style={{ color: "var(--muted)", fontSize: 12 }}>No people added yet.</p>
           ) : (

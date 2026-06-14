@@ -8,6 +8,8 @@
   --accent: #e66e52;
   --accent-dark: #c9553c;
   --green: #60836b;
+  --gold: #c9980a;
+  --gold-light: #e8be50;
   --shadow: 0 1px 2px rgba(38, 39, 36, .03), 0 12px 32px rgba(38, 39, 36, .035);
 }
 
@@ -266,6 +268,23 @@ kbd { padding: 3px 6px; border: 1px solid var(--line); border-radius: 5px; color
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* MJW Signal — command view layout helpers */
+.signal-focus-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+.signal-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.signal-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.attention-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: none; border-radius: 0 10px 10px 0; text-align: left; cursor: pointer; width: 100%; }
+.attention-item:hover { filter: brightness(.97); }
+.ignore-pill { padding: 4px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 10px; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .signal-focus-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 620px) {
+  .signal-focus-grid { grid-template-columns: 1fr; }
+  .signal-two-col { grid-template-columns: 1fr; }
+  .signal-bottom-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Login page ── */

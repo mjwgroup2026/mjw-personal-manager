@@ -39,8 +39,9 @@ function LoginForm() {
         <div className="login-logo">
           <MjwLogo size={88} />
         </div>
-        <h1 className="login-title">MJW Tracker</h1>
-        <p className="login-sub">Sign in to your workspace</p>
+        <h1 className="login-title">MJW Signal</h1>
+        <p className="login-sub" style={{ marginBottom: 6 }}>No Noise. Just Signal.</p>
+        <p style={{ margin: "0 0 24px", color: "#444", fontSize: 11, letterSpacing: ".3px" }}>Authorised users only</p>
 
         {justRegistered && (
           <p style={{ color: "#2d7a4a", background: "#eafaf1", border: "1px solid #b7e4c7", borderRadius: 8, padding: "10px 14px", fontSize: 13, margin: "0 0 12px", textAlign: "center" }}>

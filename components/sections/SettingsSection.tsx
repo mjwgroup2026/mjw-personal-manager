@@ -139,16 +139,16 @@ export function SettingsSection({
           </div>
           <div style={{ fontSize: 12, lineHeight: 1.7, color: "var(--muted)" }}>
             <p style={{ margin: "0 0 10px" }}>
-              <strong style={{ color: "var(--text)" }}>MJW Tracker</strong> is a private, personal productivity platform. Access is restricted to authorised users only.
+              <strong style={{ color: "var(--text)" }}>MJW Signal</strong> is a private, personal command dashboard. Access is restricted to authorised users only.
+            </p>
+            <p style={{ margin: "0 0 10px" }}>
+              Figures, risk indicators, and AI/system-generated summaries must be verified against approved source records before financial, legal, or operational action is taken. This dashboard does not replace formal approval processes, source documents, or accounting records.
             </p>
             <p style={{ margin: "0 0 10px" }}>
               All data is stored in your Supabase database and locally in your browser. No data is shared with third parties beyond your chosen hosting provider.
             </p>
-            <p style={{ margin: "0 0 10px" }}>
-              Financial figures shown are for personal tracking purposes only and do not constitute financial advice.
-            </p>
             <p style={{ margin: 0 }}>
-              © {new Date().getFullYear()} MJW Tracker. All rights reserved. Unauthorised access is prohibited.
+              © {new Date().getFullYear()} MJW Signal. All rights reserved. Unauthorised access is prohibited.
             </p>
           </div>
         </section>
@@ -222,7 +222,7 @@ function EditNameModal({ current, onSave, onClose }: { current: string; onSave: 
         />
       </Field>
       <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--muted)" }}>
-        This is how your name appears across MJW Tracker.
+        This is how your name appears across MJW Signal.
       </p>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
