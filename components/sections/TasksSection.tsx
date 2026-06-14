@@ -1,7 +1,7 @@
 "use client";
 import { Check, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { Priority, Task } from "@/lib/types";
+import type { EffortLevel, Priority, Task, TaskStatus } from "@/lib/types";
 import { Field, Modal, inputStyle, selectStyle } from "@/components/ui/Modal";
 
 const AREAS = ["Personal", "Work", "Health", "Money", "Home", "Learning", "Other"];
@@ -99,9 +99,17 @@ export function TasksSection({
               </button>
               <div className="task-copy">
                 <strong>{task.title}</strong>
-                <span>{task.area}<i />{task.time}{task.dueDate && <><i />Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</>}</span>
+                <span>
+                  {task.area}<i />{task.time}
+                  {task.dueDate && <><i />Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</>}
+                  {task.effort && <><i />{task.effort}</>}
+                  {task.riskFlag && <><i />⚑ risk</>}
+                </span>
               </div>
               <span className={`priority ${task.priority}`}>{task.priority}</span>
+              {task.status && task.status !== "open" && (
+                <span style={{ fontSize: 9, padding: "3px 7px", borderRadius: 6, background: task.status === "paused" ? "#fff3cd" : "#f0f0f0", color: task.status === "paused" ? "#856404" : "#666", fontWeight: 700, textTransform: "uppercase" }}>{task.status}</span>
+              )}
               <button
                 className="row-menu"
                 onClick={() => setMenuId(menuId === task.id ? null : task.id)}
@@ -172,7 +180,11 @@ function TaskModal({
   const [time, setTime] = useState(initial?.time ?? "15 min");
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? "medium");
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
+  const [scheduledDate, setScheduledDate] = useState(initial?.scheduledDate ?? "");
   const [nextAction, setNextAction] = useState(initial?.nextAction ?? "");
+  const [status, setStatus] = useState<TaskStatus>(initial?.status ?? "open");
+  const [effort, setEffort] = useState<EffortLevel>(initial?.effort ?? "medium");
+  const [riskFlag, setRiskFlag] = useState(initial?.riskFlag ?? false);
 
   return (
     <Modal title={initial ? "Edit task" : "Add task"} onClose={onClose}>
@@ -185,27 +197,43 @@ function TaskModal({
             {AREAS.map((a) => <option key={a}>{a}</option>)}
           </select>
         </Field>
-        <Field label="Time estimate">
-          <input style={inputStyle} value={time} onChange={(e) => setTime(e.target.value)} placeholder="15 min" />
-        </Field>
         <Field label="Priority">
           <select style={selectStyle} value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
             {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
           </select>
         </Field>
+        <Field label="Effort">
+          <select style={selectStyle} value={effort} onChange={(e) => setEffort(e.target.value as EffortLevel)}>
+            {(["light", "medium", "heavy"] as EffortLevel[]).map((e) => <option key={e}>{e}</option>)}
+          </select>
+        </Field>
+        <Field label="Status">
+          <select style={selectStyle} value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
+            {(["open", "paused", "archived"] as TaskStatus[]).map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </Field>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <Field label="Time estimate">
+          <input style={inputStyle} value={time} onChange={(e) => setTime(e.target.value)} placeholder="15 min" />
+        </Field>
         <Field label="Due date">
           <input style={inputStyle} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </Field>
+        <Field label="Scheduled date">
+          <input style={inputStyle} type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
         </Field>
       </div>
       <Field label="Next action (optional)">
         <input style={inputStyle} value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="e.g. Email Sarah with the draft" />
       </Field>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
+        <input type="checkbox" id="riskFlag" checked={riskFlag} onChange={(e) => setRiskFlag(e.target.checked)} style={{ width: 16, height: 16, cursor: "pointer" }} />
+        <label htmlFor="riskFlag" style={{ fontSize: 12, cursor: "pointer", color: riskFlag ? "#c0392b" : "var(--muted)", fontWeight: riskFlag ? 700 : 400 }}>⚑ Flag as risk item</label>
+      </div>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
-        <button
-          className="primary-btn"
-          onClick={() => { if (title.trim()) onSave({ title: title.trim(), area, time, priority, dueDate: dueDate || undefined, nextAction: nextAction || undefined }); }}
-        >
+        <button className="primary-btn" onClick={() => { if (title.trim()) onSave({ title: title.trim(), area, time, priority, status, effort, riskFlag, dueDate: dueDate || undefined, scheduledDate: scheduledDate || undefined, nextAction: nextAction || undefined }); }}>
           {initial ? "Save changes" : "Add task"}
         </button>
       </div>
