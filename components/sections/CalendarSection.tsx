@@ -1,5 +1,5 @@
 "use client";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Field, Modal, inputStyle, selectStyle, textareaStyle } from "@/components/ui/Modal";
 import type { CalendarEvent, Task } from "@/lib/types";
@@ -50,6 +50,7 @@ export function CalendarSection({
   const [year, setYear]     = useState(now.getFullYear());
   const [month, setMonth]   = useState(now.getMonth());
   const [showAdd, setShowAdd]   = useState(false);
+  const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [addDate, setAddDate]   = useState(todayStr);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -82,23 +83,35 @@ export function CalendarSection({
 
   const selectedEvents = selectedDate ? (byDate.get(selectedDate) ?? []) : [];
 
-  function save(data: Omit<CalendarEvent, "id">) {
-    const event: CalendarEvent = { ...data, id: Date.now() };
+  function save(evtData: Omit<CalendarEvent, "id">) {
+    const event: CalendarEvent = { ...evtData, id: Date.now() };
     onChange([...events, event]);
     onAddTask({
-      title: data.title,
+      title: evtData.title,
       area: "Personal",
-      time: data.time ? fmtTime(data.time) : "TBD",
+      time: evtData.time ? fmtTime(evtData.time) : "TBD",
       priority: "high",
       done: false,
-      scheduledDate: data.date,
-      dueDate: data.date,
+      scheduledDate: evtData.date,
+      dueDate: evtData.date,
       status: "open",
       riskFlag: true,
-      nextAction: data.description || undefined,
+      nextAction: evtData.description || undefined,
     });
     onToast("Event added — also queued as high-priority task");
     setShowAdd(false);
+  }
+
+  function saveEdit(evtData: Omit<CalendarEvent, "id">) {
+    if (!editEvent) return;
+    onChange(events.map((e) => e.id === editEvent.id ? { ...evtData, id: editEvent.id } : e));
+    onToast("Event updated");
+    setEditEvent(null);
+    // if date changed, update selectedDate so the panel stays open on new date
+    if (evtData.date !== selectedDate) {
+      const [y, m] = evtData.date.split("-").map(Number);
+      setYear(y); setMonth(m - 1); setSelectedDate(evtData.date);
+    }
   }
 
   function remove(id: number) {
@@ -220,7 +233,10 @@ export function CalendarSection({
                       </div>
                       {e.description && <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>{e.description}</p>}
                     </div>
-                    <button onClick={() => remove(e.id)} style={{ padding: 4, border: 0, background: "none", color: "var(--muted)", cursor: "pointer", flexShrink: 0 }}><Trash2 size={14} /></button>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button onClick={() => setEditEvent(e)} style={{ padding: 4, border: 0, background: "none", color: "var(--muted)", cursor: "pointer" }}><Pencil size={13} /></button>
+                      <button onClick={() => remove(e.id)} style={{ padding: 4, border: 0, background: "none", color: "var(--muted)", cursor: "pointer" }}><Trash2 size={14} /></button>
+                    </div>
                   </div>
                 ))
               )}
@@ -255,10 +271,10 @@ export function CalendarSection({
                         {fmtDate(e.date)}{e.time ? ` · ${fmtTime(e.time)}` : ""}
                       </span>
                     </div>
-                    <button
-                      onClick={(ev) => { ev.stopPropagation(); remove(e.id); }}
-                      style={{ padding: 2, border: 0, background: "none", color: "var(--muted)", cursor: "pointer", flexShrink: 0 }}
-                    ><X size={13} /></button>
+                    <div style={{ display: "flex", gap: 2 }}>
+                      <button onClick={(ev) => { ev.stopPropagation(); setEditEvent(e); }} style={{ padding: 2, border: 0, background: "none", color: "var(--muted)", cursor: "pointer" }}><Pencil size={12} /></button>
+                      <button onClick={(ev) => { ev.stopPropagation(); remove(e.id); }} style={{ padding: 2, border: 0, background: "none", color: "var(--muted)", cursor: "pointer" }}><X size={13} /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -288,16 +304,26 @@ export function CalendarSection({
           onClose={() => setShowAdd(false)}
         />
       )}
+      {editEvent && (
+        <EventModal
+          initial={editEvent}
+          isEdit
+          onSave={saveEdit}
+          onClose={() => setEditEvent(null)}
+        />
+      )}
     </div>
   );
 }
 
 function EventModal({
   initial,
+  isEdit,
   onSave,
   onClose,
 }: {
   initial: Partial<Omit<CalendarEvent, "id">>;
+  isEdit?: boolean;
   onSave: (d: Omit<CalendarEvent, "id">) => void;
   onClose: () => void;
 }) {
@@ -308,7 +334,7 @@ function EventModal({
   const [description, setDesc]  = useState(initial.description ?? "");
 
   return (
-    <Modal title="Add calendar event" onClose={onClose}>
+    <Modal title={isEdit ? "Edit event" : "Add calendar event"} onClose={onClose}>
       <Field label="Event title">
         <input
           style={inputStyle}
@@ -342,16 +368,18 @@ function EventModal({
           placeholder="Any details, preparation notes, or context…"
         />
       </Field>
-      <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(230,110,82,.06)", border: "1px solid rgba(230,110,82,.15)", fontSize: 11, color: "var(--accent)", marginBottom: 16 }}>
-        This event will also be added to your Tasks as a high-priority, risk-flagged item on the same date.
-      </div>
+      {!isEdit && (
+        <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(230,110,82,.06)", border: "1px solid rgba(230,110,82,.15)", fontSize: 11, color: "var(--accent)", marginBottom: 16 }}>
+          This event will also be added to your Tasks as a high-priority, risk-flagged item on the same date.
+        </div>
+      )}
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
         <button
           className="primary-btn"
           onClick={() => { if (title.trim() && date) onSave({ title: title.trim(), date, time, type, description, allDay: !time }); }}
         >
-          Add event
+          {isEdit ? "Save changes" : "Add event"}
         </button>
       </div>
     </Modal>
