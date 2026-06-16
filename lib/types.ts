@@ -49,6 +49,7 @@ export type Expense = {
   date: string;
   recurring: boolean;
   frequency?: "daily" | "weekly" | "monthly" | "yearly";
+  accountId?: number;
 };
 
 export type Loan = {

@@ -217,10 +217,17 @@ function ExpensesTab({ data, onChange, onToast, fmt }: { data: MoneyData; onChan
 
   function save(exp: Omit<Expense, "id">) {
     if (edit) {
-      onChange({ ...data, expenses: data.expenses.map((e) => e.id === edit.id ? { ...e, ...exp } : e) });
+      const amountDiff = exp.amount - edit.amount;
+      const accounts = exp.accountId
+        ? data.accounts.map((a) => a.id === exp.accountId ? { ...a, balance: a.balance - amountDiff } : a)
+        : data.accounts;
+      onChange({ ...data, accounts, expenses: data.expenses.map((e) => e.id === edit.id ? { ...e, ...exp } : e) });
       onToast("Expense updated"); setEdit(null);
     } else {
-      onChange({ ...data, expenses: [...data.expenses, { id: Date.now(), ...exp }] });
+      const accounts = exp.accountId
+        ? data.accounts.map((a) => a.id === exp.accountId ? { ...a, balance: a.balance - exp.amount } : a)
+        : data.accounts;
+      onChange({ ...data, accounts, expenses: [...data.expenses, { id: Date.now(), ...exp }] });
       onToast("Expense added"); setShow(false);
     }
   }
@@ -239,15 +246,18 @@ function ExpensesTab({ data, onChange, onToast, fmt }: { data: MoneyData; onChan
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead><tr style={{ borderBottom: "1px solid var(--line)", textAlign: "left" }}>
-              {["Name", "Category", "Amount", "Date", "Recurring", ""].map((h) => <th key={h} style={{ padding: "12px 18px", color: "var(--muted)", fontWeight: 700, fontSize: 10, letterSpacing: ".6px", textTransform: "uppercase" }}>{h}</th>)}
+              {["Name", "Category", "Amount", "Account", "Date", "Recurring", ""].map((h) => <th key={h} style={{ padding: "12px 18px", color: "var(--muted)", fontWeight: 700, fontSize: 10, letterSpacing: ".6px", textTransform: "uppercase" }}>{h}</th>)}
             </tr></thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: "24px 18px", color: "var(--muted)", textAlign: "center" }}>No expenses logged.</td></tr>}
-              {filtered.sort((a, b) => b.date.localeCompare(a.date)).map((e) => (
+              {filtered.length === 0 && <tr><td colSpan={7} style={{ padding: "24px 18px", color: "var(--muted)", textAlign: "center" }}>No expenses logged.</td></tr>}
+              {filtered.sort((a, b) => b.date.localeCompare(a.date)).map((e) => {
+                const acc = data.accounts.find((a) => a.id === e.accountId);
+                return (
                 <tr key={e.id} style={{ borderBottom: "1px solid var(--line)" }}>
                   <td style={{ padding: "12px 18px", fontWeight: 600 }}>{e.name}</td>
                   <td style={{ padding: "12px 18px", color: "var(--muted)" }}>{e.category}</td>
                   <td style={{ padding: "12px 18px", color: "#c0392b", fontWeight: 700 }}>{fmt(e.amount)}</td>
+                  <td style={{ padding: "12px 18px", color: "var(--muted)" }}>{acc ? acc.name : <span style={{ opacity: .4 }}>—</span>}</td>
                   <td style={{ padding: "12px 18px", color: "var(--muted)" }}>{e.date}</td>
                   <td style={{ padding: "12px 18px" }}>{e.recurring ? <span style={{ padding: "3px 8px", borderRadius: 6, background: "#e3eee5", color: "#4f7d5d", fontSize: 10, fontWeight: 700 }}>{e.frequency}</span> : <span style={{ color: "var(--muted)", fontSize: 11 }}>once</span>}</td>
                   <td style={{ padding: "12px 18px" }}>
@@ -257,29 +267,37 @@ function ExpensesTab({ data, onChange, onToast, fmt }: { data: MoneyData; onChan
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
       </section>
-      {(show || edit) && <ExpenseModal initial={edit ?? undefined} onSave={save} onClose={() => { setShow(false); setEdit(null); }} />}
+      {(show || edit) && <ExpenseModal initial={edit ?? undefined} accounts={data.accounts} onSave={save} onClose={() => { setShow(false); setEdit(null); }} />}
     </div>
   );
 }
 
-function ExpenseModal({ initial, onSave, onClose }: { initial?: Expense; onSave: (e: Omit<Expense, "id">) => void; onClose: () => void }) {
+function ExpenseModal({ initial, accounts, onSave, onClose }: { initial?: Expense; accounts: BankAccount[]; onSave: (e: Omit<Expense, "id">) => void; onClose: () => void }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [amount, setAmount] = useState(String(initial?.amount ?? ""));
   const [category, setCategory] = useState(initial?.category ?? "Groceries");
   const [date, setDate] = useState(initial?.date ?? new Date().toISOString().split("T")[0]);
   const [recurring, setRecurring] = useState(initial?.recurring ?? false);
   const [frequency, setFrequency] = useState<Expense["frequency"]>(initial?.frequency ?? "monthly");
+  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId);
   return (
     <Modal title={initial ? "Edit expense" : "Log expense"} onClose={onClose}>
       <Field label="Name"><input style={inputStyle} autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Netflix" /></Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Amount (R)"><input style={inputStyle} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" /></Field>
         <Field label="Category"><select style={selectStyle} value={category} onChange={(e) => setCategory(e.target.value)}>{EXPENSE_CATS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        <Field label="Paid from account">
+          <select style={selectStyle} value={accountId ?? ""} onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : undefined)}>
+            <option value="">— Select account —</option>
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </Field>
         <Field label="Date"><input style={inputStyle} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="Recurring?">
           <div style={{ display: "flex", alignItems: "center", gap: 10, height: 46 }}>
@@ -291,7 +309,7 @@ function ExpenseModal({ initial, onSave, onClose }: { initial?: Expense; onSave:
       </div>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
-        <button className="primary-btn" onClick={() => { if (name.trim()) onSave({ name: name.trim(), amount: parseFloat(amount) || 0, category, date, recurring, frequency }); }}>{initial ? "Save" : "Log expense"}</button>
+        <button className="primary-btn" onClick={() => { if (name.trim()) onSave({ name: name.trim(), amount: parseFloat(amount) || 0, category, date, recurring, frequency, accountId }); }}>{initial ? "Save" : "Log expense"}</button>
       </div>
     </Modal>
   );
