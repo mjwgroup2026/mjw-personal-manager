@@ -1,7 +1,7 @@
 "use client";
-import { ArrowDownRight, ArrowUpRight, Landmark, Pencil, Plus, Target, Trash2, TrendingUp, WalletCards } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, Circle, Landmark, Pencil, Plus, Target, Trash2, TrendingUp, WalletCards } from "lucide-react";
 import { useState } from "react";
-import type { BankAccount, Expense, FinancialGoal, Loan, MoneyData } from "@/lib/types";
+import type { BankAccount, Expense, FinancialGoal, Loan, MoneyData, MoneyPayment } from "@/lib/types";
 import { Field, Modal, inputStyle, selectStyle } from "@/components/ui/Modal";
 
 const EXPENSE_CATS = ["Groceries", "Rent", "Transport", "Utilities", "Health", "Entertainment", "Clothing", "Education", "Dining", "Savings", "Subscription", "Insurance", "Other"];
@@ -13,7 +13,29 @@ function fmt(n: number) {
   return "R " + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-type Tab = "overview" | "accounts" | "expenses" | "loans" | "goals";
+type Tab = "overview" | "accounts" | "expenses" | "cashflow" | "loans" | "goals";
+
+function todayPeriod() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function periodLabel(p: string) {
+  const [y, m] = p.split("-");
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleString("en-ZA", { month: "long", year: "numeric" });
+}
+
+function nextPeriod(p: string) {
+  const [y, m] = p.split("-").map(Number);
+  const d = new Date(y, m, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function prevPeriod(p: string) {
+  const [y, m] = p.split("-").map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export function MoneySection({
   data,
@@ -78,7 +100,7 @@ export function MoneySection({
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-        {(["overview", "accounts", "expenses", "loans", "goals"] as Tab[]).map((t) => (
+        {(["overview", "accounts", "cashflow", "expenses", "loans", "goals"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: "7px 18px", borderRadius: 20, border: "1px solid var(--line)", background: tab === t ? "var(--accent)" : "var(--surface)", color: tab === t ? "#fff" : "var(--text)", fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
             {t}
           </button>
@@ -87,6 +109,7 @@ export function MoneySection({
 
       {tab === "overview" && <OverviewTab data={data} fmt={fmt} />}
       {tab === "accounts" && <AccountsTab data={data} onChange={onChange} onToast={onToast} fmt={fmt} />}
+      {tab === "cashflow" && <CashflowTab data={data} onChange={onChange} onToast={onToast} fmt={fmt} />}
       {tab === "expenses" && <ExpensesTab data={data} onChange={onChange} onToast={onToast} fmt={fmt} />}
       {tab === "loans" && <LoansTab data={data} onChange={onChange} onToast={onToast} fmt={fmt} />}
       {tab === "goals" && <GoalsTab data={data} onChange={onChange} onToast={onToast} fmt={fmt} />}
@@ -203,6 +226,227 @@ function AccountModal({ initial, onSave, onClose }: { initial?: BankAccount; onS
         <button className="primary-btn" onClick={() => { if (name.trim()) onSave({ name: name.trim(), type, balance: parseFloat(balance) || 0 }); }}>{initial ? "Save" : "Add"}</button>
       </div>
     </Modal>
+  );
+}
+
+function CashflowTab({ data, onChange, onToast, fmt }: { data: MoneyData; onChange: (d: MoneyData) => void; onToast: (m: string) => void; fmt: (n: number) => string }) {
+  const period = data.currentPeriod ?? todayPeriod();
+  const payments = data.payments ?? [];
+  const archived = data.archivedExpenses ?? [];
+
+  // recurring commitments always shown; one-off expenses logged in this period
+  const recurring = data.expenses.filter((e) => e.recurring);
+  const oneOff = data.expenses.filter((e) => !e.recurring && e.date.startsWith(period));
+
+  // lookup payment record for a recurring expense in this period
+  function getPayment(expenseId: number) {
+    return payments.find((p) => p.expenseId === expenseId && p.period === period);
+  }
+
+  const totalCommitted = recurring.reduce((s, e) => s + e.amount, 0) + oneOff.reduce((s, e) => s + e.amount, 0);
+  const totalPaid = payments.filter((p) => p.period === period && p.paid).reduce((s, p) => s + p.amount, 0);
+  const outstanding = totalCommitted - totalPaid;
+
+  // inline pay state
+  const [payingId, setPayingId] = useState<number | null>(null);
+  const [payAccountId, setPayAccountId] = useState<number | undefined>(undefined);
+  const [bankConfirm, setBankConfirm] = useState(false);
+
+  function markPaid(expense: Expense) {
+    if (!payAccountId) return;
+    const amount = expense.amount;
+    const newPayment: MoneyPayment = {
+      id: Date.now(),
+      expenseId: expense.id,
+      period,
+      paid: true,
+      paidDate: new Date().toISOString().split("T")[0],
+      paidAccountId: payAccountId,
+      amount,
+    };
+    const accounts = data.accounts.map((a) => a.id === payAccountId ? { ...a, balance: a.balance - amount } : a);
+    onChange({ ...data, accounts, payments: [...payments, newPayment] });
+    onToast(`${expense.name} marked paid`);
+    setPayingId(null);
+    setPayAccountId(undefined);
+  }
+
+  function markUnpaid(expense: Expense) {
+    const pmt = getPayment(expense.id);
+    if (!pmt) return;
+    const accounts = pmt.paidAccountId
+      ? data.accounts.map((a) => a.id === pmt.paidAccountId ? { ...a, balance: a.balance + pmt.amount } : a)
+      : data.accounts;
+    onChange({ ...data, accounts, payments: payments.filter((p) => p.id !== pmt.id) });
+    onToast(`${expense.name} marked unpaid`);
+  }
+
+  function bankPeriod() {
+    // archive one-off expenses for this period
+    const newArchived: typeof archived = [
+      ...archived,
+      ...oneOff.map((e) => ({ ...e, period })),
+    ];
+    // remove one-off expenses from active list
+    const newExpenses = data.expenses.filter((e) => e.recurring || !e.date.startsWith(period));
+    const np = nextPeriod(period);
+    onChange({ ...data, expenses: newExpenses, archivedExpenses: newArchived, currentPeriod: np, payments });
+    onToast(`Period banked — starting ${periodLabel(np)}`);
+    setBankConfirm(false);
+  }
+
+  const paidItems = recurring.filter((e) => getPayment(e.id)?.paid);
+  const unpaidItems = recurring.filter((e) => !getPayment(e.id)?.paid);
+
+  const rowStyle: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 100px 110px 1fr 160px", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: "1px solid var(--line)", fontSize: 12 };
+  const headStyle: React.CSSProperties = { ...rowStyle, color: "var(--muted)", fontWeight: 700, fontSize: 10, letterSpacing: ".6px", textTransform: "uppercase" as const, background: "var(--bg)" };
+
+  return (
+    <div>
+      {/* Period nav + bank button */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <button onClick={() => onChange({ ...data, currentPeriod: prevPeriod(period) })} style={{ ...iconBtnStyle }}><ChevronLeft size={15} /></button>
+        <strong style={{ fontSize: 16, fontFamily: "Georgia,serif" }}>{periodLabel(period)}</strong>
+        <button onClick={() => onChange({ ...data, currentPeriod: nextPeriod(period) })} style={{ ...iconBtnStyle }}><ChevronRight size={15} /></button>
+        <span style={{ flex: 1 }} />
+        <button className="secondary-btn" onClick={() => setBankConfirm(true)} style={{ fontSize: 12 }}>Bank this period →</button>
+      </div>
+
+      {/* Summary strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "Total committed", value: fmt(totalCommitted), color: "#ece8f4" },
+          { label: "Settled", value: fmt(totalPaid), color: "#e3eee5" },
+          { label: "Outstanding", value: fmt(outstanding), color: outstanding > 0 ? "#f9e9e2" : "#e3eee5" },
+        ].map((s) => (
+          <div key={s.label} style={{ padding: "16px 18px", borderRadius: 14, background: s.color, border: "1px solid rgba(0,0,0,.04)" }}>
+            <p style={{ margin: "0 0 4px", fontSize: 10, color: "#696d67" }}>{s.label}</p>
+            <strong style={{ fontSize: 20, color: "#252724", letterSpacing: "-.4px" }}>{s.value}</strong>
+          </div>
+        ))}
+      </div>
+
+      {/* Outstanding recurring */}
+      {unpaidItems.length > 0 && (
+        <section className="panel" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
+            <Circle size={14} style={{ color: "#c0392b" }} />
+            <strong style={{ fontSize: 12 }}>Outstanding ({unpaidItems.length})</strong>
+          </div>
+          <div style={headStyle}><span>Name</span><span>Amount</span><span>Category</span><span>Account</span><span /></div>
+          {unpaidItems.map((e) => (
+            <div key={e.id}>
+              <div style={{ ...rowStyle, background: payingId === e.id ? "var(--bg)" : undefined }}>
+                <span style={{ fontWeight: 600 }}>{e.name}</span>
+                <span style={{ color: "#c0392b", fontWeight: 700 }}>{fmt(e.amount)}</span>
+                <span style={{ color: "var(--muted)" }}>{e.category}</span>
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>{e.frequency}</span>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  {payingId === e.id ? null : (
+                    <button onClick={() => { setPayingId(e.id); setPayAccountId(e.accountId); }} style={{ padding: "5px 12px", borderRadius: 8, border: "1px solid var(--accent)", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Mark paid</button>
+                  )}
+                </div>
+              </div>
+              {payingId === e.id && (
+                <div style={{ padding: "10px 18px 14px", background: "var(--bg)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap" }}>Paid from:</span>
+                  <select style={{ ...selectStyle, height: 34, fontSize: 12, flex: 1, maxWidth: 240 }} value={payAccountId ?? ""} onChange={(ev) => setPayAccountId(ev.target.value ? Number(ev.target.value) : undefined)}>
+                    <option value="">— Select account —</option>
+                    {data.accounts.map((a) => <option key={a.id} value={a.id}>{a.name} ({fmt(a.balance)})</option>)}
+                  </select>
+                  <button onClick={() => markPaid(e)} disabled={!payAccountId} style={{ padding: "6px 14px", borderRadius: 8, border: 0, background: payAccountId ? "var(--accent)" : "var(--line)", color: payAccountId ? "#fff" : "var(--muted)", fontSize: 11, fontWeight: 700, cursor: payAccountId ? "pointer" : "default" }}>Confirm</button>
+                  <button onClick={() => { setPayingId(null); setPayAccountId(undefined); }} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, cursor: "pointer" }}>✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* One-off this period */}
+      {oneOff.length > 0 && (
+        <section className="panel" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
+            <Circle size={14} style={{ color: "#c0392b" }} />
+            <strong style={{ fontSize: 12 }}>Once-off this period ({oneOff.length})</strong>
+          </div>
+          <div style={headStyle}><span>Name</span><span>Amount</span><span>Category</span><span>Date</span><span /></div>
+          {oneOff.map((e) => {
+            const acc = data.accounts.find((a) => a.id === e.accountId);
+            return (
+              <div key={e.id} style={rowStyle}>
+                <span style={{ fontWeight: 600 }}>{e.name}</span>
+                <span style={{ color: "#c0392b", fontWeight: 700 }}>{fmt(e.amount)}</span>
+                <span style={{ color: "var(--muted)" }}>{e.category}</span>
+                <span style={{ color: "var(--muted)" }}>{e.date}</span>
+                <span style={{ color: "var(--muted)", fontSize: 11, textAlign: "right" }}>{acc?.name ?? "—"}</span>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* Settled recurring */}
+      {paidItems.length > 0 && (
+        <section className="panel" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 size={14} style={{ color: "#4f7d5d" }} />
+            <strong style={{ fontSize: 12 }}>Settled ({paidItems.length})</strong>
+          </div>
+          <div style={headStyle}><span>Name</span><span>Amount</span><span>Category</span><span>Paid from</span><span>Date</span></div>
+          {paidItems.map((e) => {
+            const pmt = getPayment(e.id)!;
+            const acc = data.accounts.find((a) => a.id === pmt.paidAccountId);
+            return (
+              <div key={e.id} style={{ ...rowStyle, opacity: .85 }}>
+                <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={13} color="#4f7d5d" />{e.name}</span>
+                <span style={{ color: "#4f7d5d", fontWeight: 700 }}>{fmt(e.amount)}</span>
+                <span style={{ color: "var(--muted)" }}>{e.category}</span>
+                <span style={{ color: "var(--muted)" }}>{acc?.name ?? "—"}</span>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <span style={{ color: "var(--muted)", fontSize: 11 }}>{pmt.paidDate}</span>
+                  <button onClick={() => markUnpaid(e)} style={{ fontSize: 10, color: "var(--muted)", background: "none", border: 0, cursor: "pointer", textDecoration: "underline" }}>undo</button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {unpaidItems.length === 0 && oneOff.length === 0 && paidItems.length === 0 && (
+        <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", marginTop: 40 }}>No expenses or commitments for this period.</p>
+      )}
+
+      {/* Archived history */}
+      {archived.filter((e) => e.period === period).length > 0 && (
+        <details style={{ marginTop: 16 }}>
+          <summary style={{ fontSize: 12, color: "var(--muted)", cursor: "pointer", marginBottom: 8 }}>Archived once-offs this period ({archived.filter((e) => e.period === period).length})</summary>
+          {archived.filter((e) => e.period === period).map((e) => (
+            <div key={e.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "6px 0", borderBottom: "1px solid var(--line)", color: "var(--muted)" }}>
+              <span>{e.name}</span><span>{e.category}</span><span>{fmt(e.amount)}</span><span>{e.date}</span>
+            </div>
+          ))}
+        </details>
+      )}
+
+      {/* Bank confirm modal */}
+      {bankConfirm && (
+        <Modal title="Bank this period?" onClose={() => setBankConfirm(false)}>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
+            This will archive all <strong>once-off</strong> expenses logged in <strong>{periodLabel(period)}</strong> and start a fresh period for <strong>{periodLabel(nextPeriod(period))}</strong>. Recurring commitments carry forward as unpaid.
+          </p>
+          <div style={{ background: "var(--bg)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Recurring commitments (carry over)</span><strong>{recurring.length}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Once-offs to archive</span><strong>{oneOff.length}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Settled this period</span><strong>{paidItems.length} / {recurring.length}</strong></div>
+          </div>
+          <div className="modal-actions">
+            <button className="secondary-btn" onClick={() => setBankConfirm(false)}>Cancel</button>
+            <button className="primary-btn" onClick={bankPeriod}>Bank {periodLabel(period)}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }
 

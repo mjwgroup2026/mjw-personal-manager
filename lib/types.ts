@@ -71,6 +71,18 @@ export type FinancialGoal = {
   color: string;
 };
 
+export type MoneyPayment = {
+  id: number;
+  expenseId: number;
+  period: string;        // "YYYY-MM"
+  paid: boolean;
+  paidDate?: string;
+  paidAccountId?: number;
+  amount: number;        // snapshot at time of payment
+};
+
+export type ArchivedExpense = Expense & { period: string };
+
 export type MoneyData = {
   salary: number;
   salaryDay: number;
@@ -78,6 +90,9 @@ export type MoneyData = {
   expenses: Expense[];
   loans: Loan[];
   goals: FinancialGoal[];
+  currentPeriod?: string;          // "YYYY-MM", defaults to current month
+  payments?: MoneyPayment[];
+  archivedExpenses?: ArchivedExpense[];
 };
 
 export type ProjectTask = {
