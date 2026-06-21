@@ -432,3 +432,48 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (display-mode: standalone) {
   .topbar { padding-top: env(safe-area-inset-top); height: calc(76px + env(safe-area-inset-top)); }
 }
+
+
+/* ── Print: Emergency Card ── */
+@media print {
+  body * { visibility: hidden !important; }
+  #mjw-emergency-card,
+  #mjw-emergency-card * { visibility: visible !important; }
+  #mjw-emergency-card {
+    position: fixed !important;
+    inset: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    padding: 28px 36px !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+  #mjw-emergency-card h1 { font-size: 20px !important; }
+  #mjw-emergency-card h2 { font-size: 16px !important; }
+  #mjw-emergency-card h3 { font-size: 13px !important; }
+  .mobile-bottom-nav,
+  .topbar,
+  .sidebar { display: none !important; }
+}
+
+/* ── Health Hub ── */
+.section-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.section-hero .section-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  display: grid;
+  place-items: center;
+  color: #ef4444;
+  flex-shrink: 0;
+}

@@ -14,6 +14,7 @@ import {
   FileText,
   Flame,
   FolderKanban,
+  Heart,
   Home,
   ListTodo,
   LogOut,
@@ -34,7 +35,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import type { CalendarEvent, DocumentMeta, Habit, JournalEntry, Medication, MedicationLog, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
+import type { CalendarEvent, DocumentMeta, Habit, HealthData, JournalEntry, Medication, MedicationLog, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
 import { IMPORT_TASKS, IMPORT_HABITS, IMPORT_PROJECTS, applyMoneyImport } from "@/lib/personalImport";
 import { useUserData } from "@/lib/useUserData";
 import MjwLogo from "./MjwLogo";
@@ -46,10 +47,11 @@ import { ProjectsSection } from "./sections/ProjectsSection";
 import { CalendarSection } from "./sections/CalendarSection";
 import { DocumentsSection } from "./sections/DocumentsSection";
 import { MedicationSection } from "./sections/MedicationSection";
+import { HealthSection } from "./sections/HealthSection";
 import { SettingsSection } from "./sections/SettingsSection";
 import { TasksSection } from "./sections/TasksSection";
 
-type View = "today" | "tasks" | "habits" | "journal" | "calendar" | "money" | "projects" | "people" | "documents" | "medications" | "settings";
+type View = "today" | "tasks" | "habits" | "journal" | "calendar" | "money" | "projects" | "people" | "documents" | "medications" | "health" | "settings";
 type QuickAddType = "task" | "habit" | "journal" | "money" | "project" | "person";
 type QuickFields = {
   title: string; area: string; time: string; priority: Priority; dueDate: string;
@@ -114,6 +116,7 @@ const navItems: { id: View; label: string; icon: React.ComponentType<{ size?: nu
   { id: "people",      label: "People",      icon: Users },
   { id: "documents",   label: "Documents",   icon: FileText },
   { id: "medications", label: "Medication",  icon: Pill },
+  { id: "health",      label: "Health",      icon: Heart },
 ];
 
 const sparkline = "0,34 18,31 36,32 54,22 72,25 90,14 108,18 126,8 144,11 162,4";
@@ -136,6 +139,11 @@ export default function Dashboard() {
   const [documents, setDocuments] = useUserData<DocumentMeta[]>(ns("documents"), "documents", []);
   const [medications, setMedications] = useUserData<Medication[]>(ns("medications"), "medications", []);
   const [medicationLogs, setMedicationLogs] = useUserData<MedicationLog[]>(ns("medication_logs"), "medication_logs", []);
+  const [health, setHealth] = useUserData<HealthData>(ns("health"), "health", {
+    profile: { fullName: "", dateOfBirth: "", idNumber: "", gender: "", bloodType: "", organDonor: false, clinicalSummary: "", conditions: [], allergies: [], emergencyContacts: [], doctors: [], lastVerified: "" },
+    medicalAid: { scheme: "", plan: "", memberNumber: "", principalMember: "" },
+    readings: [], prescriptions: [], policies: [], wishes: [],
+  });
   const [dark, setDark] = useUserData<boolean>(ns("dark"), "dark", false);
   // Display name stored independently so user can edit it
   const [displayName, setDisplayName] = useUserData<string>(ns("display_name"), "display_name", sessionName);
@@ -397,6 +405,15 @@ export default function Dashboard() {
               onChange={setMedications}
               onLogChange={setMedicationLogs}
               onToast={showToast}
+            />
+          )}
+          {view === "health" && (
+            <HealthSection
+              health={health}
+              medications={medications}
+              onChange={setHealth}
+              onToast={showToast}
+              displayName={displayName}
             />
           )}
           {view === "documents" && (

@@ -170,6 +170,126 @@ export type Reminder = {
   date: string;
 };
 
+/* ─── Health Hub ─────────────────────────────────────────────────── */
+
+export type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | "";
+
+export type HealthEmergencyContact = {
+  id: number;
+  name: string;
+  relationship: string;
+  phone: string;
+  email?: string;
+};
+
+export type HealthDoctor = {
+  id: number;
+  name: string;
+  specialty: string;
+  phone: string;
+  practiceNumber?: string;
+  hospital?: string;
+};
+
+export type HealthProfile = {
+  fullName: string;
+  dateOfBirth: string;
+  idNumber: string;
+  gender: "male" | "female" | "other" | "";
+  bloodType: BloodType;
+  organDonor: boolean;
+  clinicalSummary: string;
+  conditions: string[];
+  allergies: string[];
+  emergencyContacts: HealthEmergencyContact[];
+  doctors: HealthDoctor[];
+  lastVerified: string;
+};
+
+export type MedicalAidDetails = {
+  scheme: string;
+  plan: string;
+  memberNumber: string;
+  principalMember: string;
+  dependantCode?: string;
+  authLine?: string;
+  emergencyLine?: string;
+  hospitalNetwork?: string;
+};
+
+export type ReadingType =
+  | "blood_sugar" | "bp" | "weight" | "hba1c"
+  | "cholesterol" | "heart_rate" | "sleep" | "mood" | "peak_flow";
+
+export type HealthReading = {
+  id: number;
+  type: ReadingType;
+  value: number;
+  value2?: number;   // diastolic for BP
+  unit: string;
+  date: string;      // YYYY-MM-DD
+  time: string;      // HH:MM
+  notes?: string;
+};
+
+export type Prescription = {
+  id: number;
+  medicationName: string;
+  dosage: string;
+  doctor: string;
+  issuedDate: string;
+  validUntil?: string;
+  repeats?: number;
+  repeatsUsed?: number;
+  pharmacy?: string;
+  notes?: string;
+};
+
+export type LegacyPolicyType = "life" | "medical" | "funeral" | "vehicle" | "home" | "disability" | "investment" | "other";
+
+export type LegacyPolicy = {
+  id: number;
+  name: string;
+  type: LegacyPolicyType;
+  insurer: string;
+  policyNumber: string;
+  beneficiary?: string;
+  contact?: string;
+  premiumAmount?: number;
+  notes?: string;
+};
+
+export type LegacyWishSection =
+  | "funeral" | "medical_directive" | "personal_message"
+  | "will_location" | "executor" | "digital_assets" | "other";
+
+export type LegacyWish = {
+  id: number;
+  section: LegacyWishSection;
+  title: string;
+  content: string;
+  updatedAt: string;
+};
+
+export type LegacyAccess = {
+  pin: string;
+  trustedName: string;
+  trustedPhone: string;
+  trustedEmail?: string;
+  grantedSections: ("emergency_card" | "policies" | "wishes" | "medications")[];
+  message?: string;
+};
+
+export type HealthData = {
+  profile: HealthProfile;
+  medicalAid: MedicalAidDetails;
+  readings: HealthReading[];
+  prescriptions: Prescription[];
+  policies: LegacyPolicy[];
+  wishes: LegacyWish[];
+  legacyAccess?: LegacyAccess;
+};
+
 export type Person = {
   id: number;
   name: string;
