@@ -317,6 +317,10 @@ export default function Dashboard() {
       <main className="main">
         <header className="topbar">
           <button className="icon-btn menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
+          <button className="brand mobile-brand" onClick={() => selectView("today")} aria-label="Go home" style={{ display: "none" }}>
+            <MjwLogo size={28} />
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-.2px" }}>MJW Signal</span>
+          </button>
           <div className="search-box">
             <Search size={18} />
             <input aria-label="Search" placeholder="Search anything..." />
@@ -390,6 +394,24 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Mobile bottom navigation */}
+      <div className="mobile-bottom-nav">
+        <nav aria-label="Mobile navigation">
+          {([
+            { id: "today" as View,    label: "Today",    icon: Home },
+            { id: "tasks" as View,    label: "Tasks",    icon: ListTodo },
+            { id: "money" as View,    label: "Money",    icon: WalletCards },
+            { id: "calendar" as View, label: "Calendar", icon: CalendarDays },
+            { id: "settings" as View, label: "Settings", icon: Settings },
+          ] as { id: View; label: string; icon: React.ComponentType<{ size?: number }> }[]).map(({ id, label, icon: Icon }) => (
+            <button key={id} className={view === id ? "mobile-nav-item active" : "mobile-nav-item"} onClick={() => selectView(id)} aria-label={label}>
+              <Icon size={22} />
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       {quickAddOpen && (
         <div className="modal-backdrop" role="presentation" onMouseDown={closeQuickAdd}>

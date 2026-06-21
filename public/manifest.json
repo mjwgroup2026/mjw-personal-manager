@@ -1,0 +1,19 @@
+{
+  "name": "MJW Personal Manager",
+  "short_name": "MJW Signal",
+  "description": "Private command dashboard. No Noise. Just Signal.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0A0A0F",
+  "background_color": "#0A0A0F",
+  "icons": [
+    {
+      "src": "/brand/mjw-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"]
+}

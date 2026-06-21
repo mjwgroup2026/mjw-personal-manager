@@ -7,7 +7,7 @@ export default function MjwLogo({ size = 64, className = "" }: { size?: number; 
   if (!imgFailed) {
     return (
       <img
-        src="/mjw-logo.png"
+        src="/brand/mjw-logo.png"
         width={size}
         height={size}
         alt="MJW logo"
