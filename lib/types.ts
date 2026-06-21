@@ -139,6 +139,31 @@ export type DocumentMeta = {
   uploadedAt: string;    // ISO date
 };
 
+export type Medication = {
+  id: number;
+  name: string;
+  dosage: string;
+  instructions: string;
+  scheduleTimes: string[];   // ["08:00", "20:00"]
+  startDate: string;
+  endDate?: string;
+  refillDate?: string;
+  prescribingDoctor?: string;
+  pharmacy?: string;
+  active: boolean;
+  color: string;
+};
+
+export type MedicationLog = {
+  id: number;
+  medicationId: number;
+  scheduledTime: string;     // "HH:MM"
+  date: string;              // YYYY-MM-DD
+  status: "taken" | "skipped" | "missed" | "snoozed";
+  takenAt?: string;
+  notes?: string;
+};
+
 export type Reminder = {
   id: number;
   text: string;

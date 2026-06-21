@@ -12,7 +12,7 @@ export default function MjwLogo({ size = 64, className = "" }: { size?: number; 
         height={size}
         alt="MJW logo"
         className={className}
-        style={{ borderRadius: "50%", objectFit: "cover", display: "block" }}
+        style={{ objectFit: "contain", display: "block", borderRadius: 0 }}
         onError={() => setImgFailed(true)}
       />
     );

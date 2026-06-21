@@ -20,6 +20,7 @@ import {
   Menu,
   Moon,
   MoreHorizontal,
+  Pill,
   Plus,
   Search,
   Settings,
@@ -33,7 +34,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import type { CalendarEvent, DocumentMeta, Habit, JournalEntry, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
+import type { CalendarEvent, DocumentMeta, Habit, JournalEntry, Medication, MedicationLog, MoneyData, Person, Priority, Project, Task } from "@/lib/types";
 import { IMPORT_TASKS, IMPORT_HABITS, IMPORT_PROJECTS, applyMoneyImport } from "@/lib/personalImport";
 import { useUserData } from "@/lib/useUserData";
 import MjwLogo from "./MjwLogo";
@@ -44,10 +45,11 @@ import { PeopleSection } from "./sections/PeopleSection";
 import { ProjectsSection } from "./sections/ProjectsSection";
 import { CalendarSection } from "./sections/CalendarSection";
 import { DocumentsSection } from "./sections/DocumentsSection";
+import { MedicationSection } from "./sections/MedicationSection";
 import { SettingsSection } from "./sections/SettingsSection";
 import { TasksSection } from "./sections/TasksSection";
 
-type View = "today" | "tasks" | "habits" | "journal" | "calendar" | "money" | "projects" | "people" | "documents" | "settings";
+type View = "today" | "tasks" | "habits" | "journal" | "calendar" | "money" | "projects" | "people" | "documents" | "medications" | "settings";
 type QuickAddType = "task" | "habit" | "journal" | "money" | "project" | "person";
 type QuickFields = {
   title: string; area: string; time: string; priority: Priority; dueDate: string;
@@ -102,15 +104,16 @@ const DEFAULT_PEOPLE: Person[] = [
 ];
 
 const navItems: { id: View; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: "today",     label: "Today",     icon: Home },
-  { id: "tasks",     label: "Tasks",     icon: ListTodo },
-  { id: "habits",    label: "Habits",    icon: Flame },
-  { id: "journal",   label: "Journal",   icon: BookOpen },
-  { id: "calendar",  label: "Calendar",  icon: CalendarDays },
-  { id: "money",     label: "Money",     icon: WalletCards },
-  { id: "projects",  label: "Projects",  icon: FolderKanban },
-  { id: "people",    label: "People",    icon: Users },
-  { id: "documents", label: "Documents", icon: FileText },
+  { id: "today",       label: "Today",       icon: Home },
+  { id: "tasks",       label: "Tasks",       icon: ListTodo },
+  { id: "habits",      label: "Habits",      icon: Flame },
+  { id: "journal",     label: "Journal",     icon: BookOpen },
+  { id: "calendar",    label: "Calendar",    icon: CalendarDays },
+  { id: "money",       label: "Money",       icon: WalletCards },
+  { id: "projects",    label: "Projects",    icon: FolderKanban },
+  { id: "people",      label: "People",      icon: Users },
+  { id: "documents",   label: "Documents",   icon: FileText },
+  { id: "medications", label: "Medication",  icon: Pill },
 ];
 
 const sparkline = "0,34 18,31 36,32 54,22 72,25 90,14 108,18 126,8 144,11 162,4";
@@ -131,6 +134,8 @@ export default function Dashboard() {
   const [people, setPeople] = useUserData<Person[]>(ns("people"), "people", DEFAULT_PEOPLE);
   const [calendarEvents, setCalendarEvents] = useUserData<CalendarEvent[]>(ns("calendar"), "calendar", []);
   const [documents, setDocuments] = useUserData<DocumentMeta[]>(ns("documents"), "documents", []);
+  const [medications, setMedications] = useUserData<Medication[]>(ns("medications"), "medications", []);
+  const [medicationLogs, setMedicationLogs] = useUserData<MedicationLog[]>(ns("medication_logs"), "medication_logs", []);
   const [dark, setDark] = useUserData<boolean>(ns("dark"), "dark", false);
   // Display name stored independently so user can edit it
   const [displayName, setDisplayName] = useUserData<string>(ns("display_name"), "display_name", sessionName);
@@ -339,7 +344,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="content">
+        <div className="content" style={view === "today" ? { padding: "16px 24px 16px", maxWidth: "none" } : undefined}>
           {view === "today" && (
             <TodayView
               greeting={greeting}
@@ -359,6 +364,16 @@ export default function Dashboard() {
               onAdd={() => setQuickAddOpen(true)}
               onMoveToTomorrow={moveToTomorrow}
               money={money}
+              medications={medications}
+              medicationLogs={medicationLogs}
+              onLogMedication={(medId, time, status) => {
+                const today = new Date().toISOString().split("T")[0];
+                const existing = medicationLogs.find((l) => l.medicationId === medId && l.date === today && l.scheduledTime === time);
+                const entry: MedicationLog = { id: existing?.id ?? Date.now(), medicationId: medId, scheduledTime: time, date: today, status, takenAt: status === "taken" ? new Date().toISOString() : undefined };
+                if (existing) setMedicationLogs(medicationLogs.map((l) => l.id === existing.id ? entry : l));
+                else setMedicationLogs([...medicationLogs, entry]);
+                showToast(status === "taken" ? "Medication logged" : "Snoozed");
+              }}
             />
           )}
           {view === "tasks" && <TasksSection tasks={tasks} onChange={setTasks} onToast={showToast} />}
@@ -375,6 +390,15 @@ export default function Dashboard() {
           {view === "money" && <MoneySection data={money} onChange={setMoney} onToast={showToast} />}
           {view === "projects" && <ProjectsSection projects={projects} onChange={setProjects} onToast={showToast} />}
           {view === "people" && <PeopleSection people={people} onChange={setPeople} onToast={showToast} />}
+          {view === "medications" && (
+            <MedicationSection
+              medications={medications}
+              logs={medicationLogs}
+              onChange={setMedications}
+              onLogChange={setMedicationLogs}
+              onToast={showToast}
+            />
+          )}
           {view === "documents" && (
             <DocumentsSection
               documents={documents}
@@ -545,12 +569,14 @@ function extractJournalActions(entries: JournalEntry[]): string[] {
 }
 
 /* ─── Today / Command View ───────────────────────────────────────── */
-function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, projects, people, progress, doneTasks, doneHabits, onToggleTask, onToggleHabit, onNavigate, onAdd, onMoveToTomorrow, money }: {
+function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, projects, people, progress, doneTasks, doneHabits, onToggleTask, onToggleHabit, onNavigate, onAdd, onMoveToTomorrow, money, medications, medicationLogs, onLogMedication }: {
   greeting: string; displayDate: string; firstName: string;
   tasks: Task[]; habits: Habit[]; journal: JournalEntry[]; projects: Project[]; people: Person[];
   progress: number; doneTasks: number; doneHabits: number; money: MoneyData;
+  medications: Medication[]; medicationLogs: MedicationLog[];
   onToggleTask: (id: number) => void; onToggleHabit: (id: number) => void;
   onNavigate: (v: View) => void; onAdd: () => void; onMoveToTomorrow: (id: number) => void;
+  onLogMedication: (medId: number, time: string, status: MedicationLog["status"]) => void;
 }) {
   const today = new Date().toISOString().split("T")[0];
   const tomorrowStr = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split("T")[0]; })();
@@ -617,6 +643,19 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
     ...journalActions.map((action, i) => ({
       id: `jaction-${i}`, label: action, source: "Journal — possible action", urgency: "warning" as const, action: () => onNavigate("journal"),
     })),
+    // Medications due now
+    ...medications.filter((m) => m.active).flatMap((m) =>
+      m.scheduleTimes
+        .filter((t) => {
+          const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+          const tMin = Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
+          const alreadyLogged = medicationLogs.some((l) => l.medicationId === m.id && l.date === today && l.scheduledTime === t && l.status !== "snoozed");
+          return !alreadyLogged && tMin - nowMin >= -30 && tMin - nowMin <= 90;
+        })
+        .map((t) => ({
+          id: `med-${m.id}-${t}`, label: `${m.name} ${m.dosage} due at ${t}`, source: "Medication", urgency: "critical" as const, action: () => onNavigate("medications"),
+        }))
+    ),
   ];
 
   const ignoreItems = [
@@ -645,13 +684,212 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
     : { text: "Financial position looks stable. Keep monitoring.", level: "ok" };
 
   return (
-    <>
-      {/* 1 — Signal Command Card */}
-      <section style={{
-        padding: "24px 28px", marginBottom: 16, borderRadius: 20,
+    <div className="today-shell">
+      {/* ── Hero bar ── */}
+      <section className="today-hero" style={{
+        padding: "14px 20px", borderRadius: 16, flexShrink: 0,
         background: "linear-gradient(135deg, #1a1f1b 0%, #242922 100%)",
         border: "1px solid #2f3830", color: "#f3f2ed", position: "relative", overflow: "hidden",
       }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, position: "relative", zIndex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", color: "var(--gold-light)", fontSize: 9, fontWeight: 780, letterSpacing: "1.4px", textTransform: "uppercase", marginBottom: 2 }}>{displayDate}</span>
+            <h1 style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: "clamp(18px, 2vw, 24px)", fontWeight: 500, letterSpacing: "-0.8px", color: "#f3f2ed", lineHeight: 1.2 }}>{greeting}, {firstName}.</h1>
+            {mainFocus && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                <span style={{ padding: "3px 8px", borderRadius: 6, background: "rgba(201,152,10,.18)", border: "1px solid rgba(201,152,10,.3)", color: "var(--gold-light)", fontSize: 9, fontWeight: 750, textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Focus</span>
+                <span style={{ fontSize: 12, color: "#e8e6df", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mainFocus.title}</span>
+                {mainFocus.nextAction && <span style={{ fontSize: 10, color: "#8a9087", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>→ {mainFocus.nextAction}</span>}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+            {([
+              { label: "Momentum", score: momentumScore, color: "var(--accent)" },
+              { label: "Rhythm",   score: rhythmScore,   color: "#60836b" },
+              { label: "Signal",   score: signalScore,   color: "var(--gold)" },
+            ] as { label: string; score: number; color: string }[]).map(({ label, score, color }) => (
+              <div key={label} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color, lineHeight: 1 }}>{score}<span style={{ fontSize: 9 }}>%</span></div>
+                <div style={{ fontSize: 8, color: "#8a9087", textTransform: "uppercase", letterSpacing: 0.8, marginTop: 2 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Main 3-column grid ── */}
+      <div className="today-grid">
+
+        {/* COL 1 — Focus + Can Wait */}
+        <div className="today-col">
+          <div className="panel today-panel">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div><strong style={{ fontSize: 13, fontFamily: "Georgia, serif" }}>Top 3 focus</strong><p style={{ margin: "2px 0 0", fontSize: 9, color: "var(--muted)" }}>{openTasks.length} open · highest priority</p></div>
+              <button onClick={() => onNavigate("tasks")} style={{ display: "flex", alignItems: "center", gap: 2, border: 0, background: "none", color: "var(--accent-dark)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>All tasks<ChevronRight size={13} /></button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {top3.length === 0
+                ? <p style={{ color: "var(--muted)", fontSize: 12, margin: 0 }}>No open tasks.</p>
+                : top3.map((task, i) => (
+                <div key={task.id} style={{ padding: "10px 12px", borderRadius: 11, background: "var(--surface-2)", border: "1px solid var(--line)", position: "relative", opacity: task.done ? 0.5 : 1 }}>
+                  <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 3, borderRadius: "11px 0 0 11px", background: task.priority === "critical" ? "#8b1a1a" : task.priority === "high" ? "var(--accent)" : task.priority === "medium" ? "#9c8db2" : "var(--green)" }} />
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, paddingLeft: 6 }}>
+                    <button onClick={() => onToggleTask(task.id)} style={{ width: 18, height: 18, display: "grid", placeItems: "center", padding: 0, border: task.done ? "none" : "1.5px solid #c8cac5", borderRadius: 5, background: task.done ? "var(--green)" : "transparent", color: "white", cursor: "pointer", flexShrink: 0, marginTop: 1 }}>
+                      {task.done && <Check size={11} />}
+                    </button>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <strong style={{ display: "block", fontSize: 11, fontWeight: 650, lineHeight: 1.3, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--muted)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</strong>
+                      <div style={{ display: "flex", gap: 5, marginTop: 3, alignItems: "center" }}>
+                        <span style={{ fontSize: 8, color: "var(--muted)" }}>#{i+1} · {task.area}</span>
+                        {task.dueDate && <span style={{ fontSize: 8, color: "var(--accent-dark)", fontWeight: 700 }}>Due {new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(task.dueDate + "T00:00:00"))}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {canWait.length > 0 && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+                <span style={{ fontSize: 9, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1 }}>Can wait</span>
+                {canWait.slice(0, 3).map((task) => (
+                  <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", borderBottom: "1px solid var(--line)" }}>
+                    <span style={{ fontSize: 8, padding: "2px 5px", borderRadius: 4, background: "var(--surface-2)", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>{task.priority}</span>
+                    <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button className="add-row" onClick={onAdd} style={{ marginTop: 10, fontSize: 10 }}><Plus size={14} />Quick add</button>
+          </div>
+        </div>
+
+        {/* COL 2 — Attention + Rhythm */}
+        <div className="today-col">
+          <div className="panel today-panel" style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexShrink: 0 }}>
+              <div>
+                <strong style={{ fontSize: 13, fontFamily: "Georgia, serif" }}>Attention</strong>
+                <p style={{ margin: "2px 0 0", fontSize: 9, color: "var(--muted)" }}>{attentionItems.length === 0 ? "All clear" : `${attentionItems.length} need review`}</p>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+              {attentionItems.length === 0
+                ? <p style={{ color: "var(--muted)", fontSize: 12, margin: 0 }}>Nothing critical right now.</p>
+                : attentionItems.map((item) => (
+                <button key={item.id} onClick={item.action} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", marginBottom: 4, width: "100%", borderRadius: 9, border: "none", borderLeft: `3px solid ${item.urgency === "critical" ? "var(--accent)" : "#d4a844"}`, background: item.urgency === "critical" ? "rgba(230,110,82,.06)" : "rgba(212,168,68,.06)", textAlign: "left", cursor: "pointer" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong style={{ display: "block", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</strong>
+                    <span style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.6 }}>{item.source}</span>
+                  </div>
+                  <ChevronRight size={13} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="panel today-panel-sm">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <strong style={{ fontSize: 12, fontFamily: "Georgia, serif" }}>Rhythm</strong>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 750, color: rhythmColor }}>{rhythmStatus}</span>
+                <button onClick={() => onNavigate("habits")} style={{ display: "flex", alignItems: "center", gap: 2, border: 0, background: "none", color: "var(--accent-dark)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}><ChevronRight size={13} /></button>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {habits.map((habit) => (
+                <button key={habit.id} onClick={() => onToggleHabit(habit.id)} title={`${habit.name} · ${habit.detail}`}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 8, border: "1px solid var(--line)", background: habit.done ? "rgba(96,131,107,.15)" : "var(--surface-2)", cursor: "pointer", fontSize: 10, fontWeight: 600, color: habit.done ? "var(--green)" : "var(--text)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: habit.done ? "var(--green)" : "var(--line)", flexShrink: 0 }} />
+                  {habit.name}
+                </button>
+              ))}
+              {habits.length === 0 && <span style={{ fontSize: 11, color: "var(--muted)" }}>No habits set.</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* COL 3 — Money + Journal */}
+        <div className="today-col">
+          <div className="panel today-panel-sm">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <strong style={{ fontSize: 12, fontFamily: "Georgia, serif" }}>Money</strong>
+              <button onClick={() => onNavigate("money")} style={{ display: "flex", alignItems: "center", gap: 2, border: 0, background: "none", color: "var(--accent-dark)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Details<ChevronRight size={13} /></button>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <span style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.8 }}>Total balance</span>
+              <strong style={{ display: "block", fontFamily: "Georgia,serif", fontSize: 22, letterSpacing: "-.6px", marginTop: 2 }}>R {totalBalance.toLocaleString("en-ZA")}</strong>
+            </div>
+            {[
+              { label: "Income", value: `R ${money.salary.toLocaleString("en-ZA")}`, color: "var(--green)" },
+              { label: "Spend", value: `R ${totalExpenses.toLocaleString("en-ZA")}`, color: cashflowWarning ? "#c0392b" : "var(--text)" },
+              { label: "Pressure", value: `${spendingPressure}%`, color: spendingPressure > 90 ? "#c0392b" : spendingPressure > 75 ? "#b87c3e" : "var(--green)" },
+              { label: "Runway", value: `${monthsRunway} mo`, color: "var(--muted)" },
+            ].map((row) => (
+              <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--line)", fontSize: 11 }}>
+                <span style={{ color: "var(--muted)", fontSize: 10 }}>{row.label}</span>
+                <strong style={{ color: row.color, fontSize: 11 }}>{row.value}</strong>
+              </div>
+            ))}
+            <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: realitySignal.level === "critical" ? "rgba(192,57,43,.07)" : realitySignal.level === "warning" ? "rgba(212,168,68,.07)" : "var(--surface-2)", border: `1px solid ${realitySignal.level === "critical" ? "rgba(192,57,43,.2)" : realitySignal.level === "warning" ? "rgba(212,168,68,.2)" : "var(--line)"}`, fontSize: 10, color: realitySignal.level === "critical" ? "#c0392b" : realitySignal.level === "warning" ? "#b87c3e" : "var(--muted)" }}>
+              {realitySignal.text}
+            </div>
+          </div>
+          <div className="panel today-panel" style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Journal */}
+            <div style={{ paddingBottom: 10, borderBottom: "1px solid var(--line)", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <strong style={{ fontSize: 12, fontFamily: "Georgia, serif" }}>Journal</strong>
+                <button onClick={() => onNavigate("journal")} style={{ display: "flex", alignItems: "center", gap: 2, border: 0, background: "none", color: "var(--accent-dark)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>{todayEntry ? "Read" : "Write"}<ChevronRight size={13} /></button>
+              </div>
+              <p style={{ margin: 0, fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>
+                {todayEntry ? "Today captured. Keep the momentum." : latestEntry ? `Last: ${new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "short" }).format(new Date(latestEntry.date))}` : "No entries yet. Start writing."}
+              </p>
+            </div>
+            {/* Projects */}
+            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 12, fontFamily: "Georgia, serif" }}>Projects</strong>
+                <button onClick={() => onNavigate("projects")} style={{ display: "flex", alignItems: "center", gap: 2, border: 0, background: "none", color: "var(--accent-dark)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}><ChevronRight size={13} /></button>
+              </div>
+              {activeProjects.length === 0
+                ? <p style={{ margin: 0, fontSize: 11, color: "var(--muted)" }}>No active projects.</p>
+                : activeProjects.slice(0, 4).map((p) => {
+                  const done = p.tasks.filter((t) => t.done).length;
+                  const prog = p.tasks.length ? Math.round((done / p.tasks.length) * 100) : 0;
+                  return (
+                    <div key={p.id} style={{ marginBottom: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{p.name}</span>
+                        <span style={{ color: "var(--muted)", fontSize: 9, flexShrink: 0, marginLeft: 8 }}>{prog}%</span>
+                      </div>
+                      <div style={{ height: 3, borderRadius: 3, background: "var(--line)", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${prog}%`, background: "var(--accent)", borderRadius: 3 }} />
+                      </div>
+                    </div>
+                  );
+                })
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Ignored strip ── */}
+      {ignoreItems.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, overflowX: "auto", padding: "6px 0" }}>
+          <span style={{ fontSize: 9, fontWeight: 750, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Ignored today</span>
+          {ignoreItems.slice(0, 10).map((item) => (
+            <span key={item.id} className="ignore-pill" style={{ flexShrink: 0 }}>{item.label} <span style={{ fontSize: 8, opacity: 0.6 }}>· {item.source}</span></span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  /* ─── dead code removed ─── */
+  function _unused() { return (
+    <>
+      <section style={{ display: "none" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, position: "relative", zIndex: 1 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", color: "var(--gold)", fontSize: 10, fontWeight: 780, letterSpacing: "1.4px", textTransform: "uppercase", marginBottom: 8 }}>{displayDate}</span>
@@ -974,7 +1212,7 @@ function TodayView({ greeting, displayDate, firstName, tasks, habits, journal, p
         </section>
       </div>
     </>
-  );
+  ); }
 }
 
 function getColorHex(color: string) {
