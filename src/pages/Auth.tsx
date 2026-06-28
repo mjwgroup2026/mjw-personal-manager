@@ -2,14 +2,11 @@ import { useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import mjwLogo from "@/assets/mjw-logo.png";
-import { Lock, Shield, ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
@@ -29,16 +26,12 @@ const Auth = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0D1B2A' }}>
-        <div className="flex items-center gap-3">
-          <img src={mjwLogo} alt="Ledgera" className="h-10 w-10 animate-pulse" />
-          <p className="text-sm text-white/50 font-body">Loading...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0a1628' }}>
+        <img src={mjwLogo} alt="Ledgera" className="h-10 w-10 animate-pulse" />
       </div>
     );
   }
 
-  // Any logged-in user goes straight to the app
   if (user) return <Navigate to="/app" replace />;
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -71,174 +64,189 @@ const Auth = () => {
     setSubmitting(false);
   };
 
-  // Registration complete screen
   if (registrationComplete) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-6" style={{ background: '#0D1B2A' }}>
-        <Card className="w-full max-w-sm border-border shadow-xl">
-          <CardContent className="pt-8 pb-6 text-center">
-            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-success" />
-            <h2 className="text-lg font-bold font-display mb-2">Account Created</h2>
-            <p className="text-sm text-muted-foreground font-body mb-1">
-              Please check your email to verify your account, then sign in.
-            </p>
-            <p className="text-sm font-semibold font-body mb-4">{email}</p>
-            <Button className="mt-5 w-full bg-accent text-accent-foreground hover:bg-accent/90 font-body" onClick={() => { setRegistrationComplete(false); setMode('login'); }}>
-              Go to Sign In
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ background: '#0a1628' }}>
+        <div className="w-full max-w-sm rounded-2xl border border-white/8 p-10 text-center" style={{ background: '#0f2040' }}>
+          <CheckCircle className="mx-auto mb-4 h-12 w-12" style={{ color: '#C9A84C' }} />
+          <h2 className="text-lg font-bold text-white font-body mb-2">Account Created</h2>
+          <p className="text-sm text-white/50 font-body mb-4">
+            Check your email to verify your account, then sign in.
+          </p>
+          <p className="text-sm font-semibold text-white/70 font-body mb-6">{email}</p>
+          <button
+            onClick={() => { setRegistrationComplete(false); setMode('login'); }}
+            className="w-full py-3 rounded-lg font-semibold text-sm font-body transition-opacity hover:opacity-90"
+            style={{ background: '#C9A84C', color: '#0a1628' }}
+          >
+            Go to Sign In
+          </button>
+        </div>
+        <FooterLinks navigate={navigate} />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel — dark navy branding */}
-      <div className="hidden w-1/2 flex-col justify-between lg:flex" style={{ background: '#0D1B2A' }}>
-        <div className="p-10">
-          <div className="flex items-center gap-3">
-            <img src={mjwLogo} alt="Ledgera" className="h-11 w-11" />
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-white tracking-tight font-body">Ledgera</span>
-              <span className="text-[10px] text-white/30 font-body">by MJW Group</span>
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ background: '#0a1628' }}>
 
-        <div className="flex flex-1 flex-col items-center justify-center px-10">
-          <img src={mjwLogo} alt="Ledgera" className="h-40 w-40 mb-8 drop-shadow-2xl" />
-          <h1 className="mb-4 text-3xl font-bold text-white leading-tight font-display text-center">
-            Accounting & Tax<br />Operations Platform
-          </h1>
-          <p className="mb-8 max-w-md text-sm text-white/40 leading-relaxed font-body text-center">
-            SARS-aligned bookkeeping, VAT tracking, income tax monitoring, and audit-ready exports for South African sole proprietors and owner-managed businesses.
+      {/* Card */}
+      <div className="w-full max-w-sm rounded-2xl border border-white/8 overflow-hidden" style={{ background: '#0f2040' }}>
+
+        {/* Header — logo + name + tagline */}
+        <div className="flex flex-col items-center pt-10 pb-6 px-8 text-center border-b border-white/6">
+          <img src={mjwLogo} alt="Ledgera" className="h-16 w-16 mb-4 drop-shadow-lg" />
+          <h1 className="text-2xl font-bold tracking-widest text-white font-body mb-0.5">LEDGERA</h1>
+          <p className="text-[10px] tracking-[0.25em] font-semibold font-body mb-4" style={{ color: '#C9A84C' }}>
+            FINANCIAL MANAGEMENT
           </p>
-          <div className="flex gap-6">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-accent" />
-              <span className="text-xs text-white/50 font-body">Audit-Ready</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-accent" />
-              <span className="text-xs text-white/50 font-body">SARS-Aligned</span>
-            </div>
-          </div>
+          <p className="text-xs text-white/35 font-body leading-relaxed">
+            Audit-ready bookkeeping. SARS-aligned tax. Complete financial control.
+          </p>
         </div>
 
-        <div className="border-t border-white/5 px-10 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] text-white/20 font-body">MJW Group</p>
-            <div className="flex gap-4">
-              <button onClick={() => navigate('/privacy')} className="text-[11px] text-white/25 hover:text-white/50 transition-colors font-body">Privacy</button>
-              <button onClick={() => navigate('/terms')} className="text-[11px] text-white/25 hover:text-white/50 transition-colors font-body">Terms</button>
-              <button onClick={() => navigate('/data-protection')} className="text-[11px] text-white/25 hover:text-white/50 transition-colors font-body">Data Protection</button>
-            </div>
-          </div>
-        </div>
-      </div>
+        {/* Form */}
+        <div className="px-8 py-7">
+          <p className="text-xs font-bold tracking-widest text-white/50 font-body mb-5 uppercase">
+            {mode === 'login' ? 'Sign In' : 'Create Account'}
+          </p>
 
-      {/* Right panel — form */}
-      <div className="flex flex-1 flex-col bg-background">
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-          {/* Mobile logo */}
-          <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <img src={mjwLogo} alt="Ledgera" className="h-24 w-24 mb-2" />
-            <div className="flex flex-col items-center">
-              <span className="text-lg font-bold text-foreground font-body">Ledgera</span>
-              <span className="text-[10px] text-muted-foreground font-body">by MJW Group</span>
-            </div>
-          </div>
+          {mode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Email</label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.co.za"
+                  required
+                  className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] focus:ring-[#C9A84C]/20 font-body text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Password</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] focus:ring-[#C9A84C]/20 font-body text-sm"
+                />
+              </div>
 
-          <Card className="w-full max-w-sm border-border shadow-sm">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl font-display font-bold">
-                {mode === 'login' ? 'Sign In' : 'Create Account'}
-              </CardTitle>
-              <CardDescription className="font-body text-sm">
-                {mode === 'login'
-                  ? "Access your accounting workspace"
-                  : "Get started with Ledgera"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {mode === 'login' ? (
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-sm font-medium font-body">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-10" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-sm font-medium font-body">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-10" />
-                  </div>
-                  <Button type="submit" disabled={submitting} className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 font-body font-semibold">
-                    {submitting ? "Please wait…" : "Sign In"}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium font-body">Full Name</Label>
-                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Josh Stone" required className="h-10" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium font-body">Email Address</Label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-10" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium font-body">Password</Label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-10" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium font-body">Confirm Password</Label>
-                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-10" />
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Checkbox id="terms" checked={agreedTerms} onCheckedChange={(c) => setAgreedTerms(c === true)} className="mt-0.5" />
-                    <label htmlFor="terms" className="text-xs text-muted-foreground font-body leading-relaxed cursor-pointer">
-                      I agree to the <button type="button" onClick={() => navigate('/terms')} className="text-secondary hover:underline">Terms of Service</button> and <button type="button" onClick={() => navigate('/privacy')} className="text-secondary hover:underline">Privacy Policy</button>
-                    </label>
-                  </div>
-                  <Button type="submit" disabled={submitting} className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 font-body font-semibold">
-                    {submitting ? "Please wait…" : "Create Account"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
-              )}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3 rounded-lg font-bold text-sm font-body tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                style={{ background: '#C9A84C', color: '#0a1628' }}
+              >
+                {submitting ? "Please wait…" : <>SIGN IN <ArrowRight className="h-4 w-4" /></>}
+              </button>
 
-              <div className="mt-4 flex items-center justify-between text-xs font-body">
-                <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="font-medium text-secondary hover:underline">
-                  {mode === 'login' ? 'Create Account' : 'Sign In Instead'}
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setMode('register')}
+                  className="text-[11px] font-body hover:underline transition-colors"
+                  style={{ color: '#C9A84C' }}
+                >
+                  Create Account
                 </button>
-                {mode === 'login' && (
-                  <button type="button" className="text-muted-foreground hover:text-foreground transition-colors" onClick={async () => {
+                <button
+                  type="button"
+                  className="text-[11px] font-body text-white/30 hover:text-white/60 transition-colors"
+                  onClick={async () => {
                     if (!email) { toast({ title: "Enter your email first", variant: "destructive" }); return; }
                     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
                     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-                    else toast({ title: "Reset email sent", description: "Check your inbox for a password reset link." });
-                  }}>
-                    Forgot Password
-                  </button>
-                )}
+                    else toast({ title: "Reset email sent", description: "Check your inbox." });
+                  }}
+                >
+                  Forgot Password
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Full Name</label>
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Mornay Walters" required className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Email Address</label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.co.za" required className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Password</label>
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+              </div>
+              <div>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Confirm Password</label>
+                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+              </div>
+              <div className="flex items-start gap-2 pt-1">
+                <Checkbox
+                  id="terms"
+                  checked={agreedTerms}
+                  onCheckedChange={(c) => setAgreedTerms(c === true)}
+                  className="mt-0.5 border-white/20 data-[state=checked]:bg-[#C9A84C] data-[state=checked]:border-[#C9A84C]"
+                />
+                <label htmlFor="terms" className="text-[11px] text-white/35 font-body leading-relaxed cursor-pointer">
+                  I agree to the{" "}
+                  <button type="button" onClick={() => navigate('/terms')} className="text-[#C9A84C] hover:underline">Terms</button>
+                  {" "}and{" "}
+                  <button type="button" onClick={() => navigate('/privacy')} className="text-[#C9A84C] hover:underline">Privacy Policy</button>
+                </label>
+              </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-[11px] text-muted-foreground font-body">
-            <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors">Privacy</button>
-            <button onClick={() => navigate('/terms')} className="hover:text-foreground transition-colors">Terms of Service</button>
-            <button onClick={() => navigate('/data-protection')} className="hover:text-foreground transition-colors">Data Protection</button>
-            <a href="mailto:support@mjwgroup.co.za" className="hover:text-foreground transition-colors">Contact Us</a>
-          </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3 rounded-lg font-bold text-sm font-body tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-1"
+                style={{ background: '#C9A84C', color: '#0a1628' }}
+              >
+                {submitting ? "Please wait…" : <>CREATE ACCOUNT <ArrowRight className="h-4 w-4" /></>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="w-full text-center text-[11px] font-body pt-1 transition-colors"
+                style={{ color: '#C9A84C' }}
+              >
+                Already have an account? Sign In
+              </button>
+            </form>
+          )}
         </div>
 
-        <div className="border-t border-border px-6 py-3 text-center lg:hidden">
-          <p className="text-[10px] text-muted-foreground font-body">MJW Group</p>
+        {/* Card footer */}
+        <div className="border-t border-white/6 px-8 py-4 flex items-center justify-center gap-4 text-[10px] tracking-wider font-body text-white/20">
+          <button onClick={() => navigate('/')} className="hover:text-white/50 transition-colors uppercase">Ledgera</button>
+          <span>|</span>
+          <button onClick={() => navigate('/privacy')} className="hover:text-white/50 transition-colors uppercase">Privacy</button>
+          <span>|</span>
+          <button onClick={() => navigate('/terms')} className="hover:text-white/50 transition-colors uppercase">Terms</button>
+          <span>|</span>
+          <span className="uppercase">MJW Group</span>
         </div>
       </div>
+
     </div>
   );
 };
+
+const FooterLinks = ({ navigate }: { navigate: (path: string) => void }) => (
+  <div className="mt-6 flex items-center gap-4 text-[10px] tracking-wider font-body text-white/20">
+    <button onClick={() => navigate('/')} className="hover:text-white/50 transition-colors uppercase">Ledgera</button>
+    <span>|</span>
+    <button onClick={() => navigate('/privacy')} className="hover:text-white/50 transition-colors uppercase">Privacy</button>
+    <span>|</span>
+    <span className="uppercase">MJW Group</span>
+  </div>
+);
 
 export default Auth;
