@@ -1,11 +1,10 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEntity } from "@/contexts/EntityContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import {
   LayoutDashboard, ArrowLeftRight, Calculator, Building2, ClipboardList,
   FileText, Receipt, LogOut, Plus, Home, Users, DollarSign, Car, Upload,
-  BarChart3, Settings, UserCircle, Menu, ChevronDown, AlertTriangle, Clock, Lock,
+  BarChart3, Settings, UserCircle, Menu, ChevronDown,
   Flame, BookOpen, CalendarDays, FolderKanban, Pill, Heart, ListTodo, Sparkles,
 } from "lucide-react";
 import mjwLogo from "@/assets/mjw-logo.png";
@@ -77,7 +76,6 @@ const navSections = [
 const AppLayout = () => {
   const { signOut, user } = useAuth();
   const { entities, selectedEntity, setSelectedEntityId } = useEntity();
-  const { state: subState, message: subMessage, trialDaysRemaining, isRestricted } = useSubscription();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [entitySelectorOpen, setEntitySelectorOpen] = useState(false);
@@ -95,16 +93,6 @@ const AppLayout = () => {
           <span className="text-[9px] text-white/25 font-body leading-none mt-0.5">by MJW Group</span>
         </div>
       </div>
-
-      {/* Trial countdown in sidebar */}
-      {subState === "trial" && trialDaysRemaining !== null && (
-        <div className="mx-3 mt-3 rounded-md border border-secondary/20 bg-secondary/10 px-3 py-2 flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 text-secondary shrink-0" />
-          <span className="text-[11px] text-white/70 font-body">
-            Trial ends in <span className="font-bold text-secondary">{trialDaysRemaining}d</span>
-          </span>
-        </div>
-      )}
 
       {/* Entity selector */}
       <div className="border-b border-white/5 p-3">
@@ -245,30 +233,6 @@ const AppLayout = () => {
         </header>
 
         <main className="flex-1 overflow-y-auto bg-background">
-          {/* Subscription banners */}
-          {isRestricted && (
-            <div className="mx-4 mt-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 flex items-center gap-2">
-              <Lock className="h-4 w-4 text-destructive shrink-0" />
-              <p className="text-xs text-foreground font-body flex-1">
-                {subMessage || "Your subscription has expired. Please subscribe or enter a redeem code to continue."}
-              </p>
-              <Button variant="outline" size="sm" className="ml-auto shrink-0 text-xs" onClick={() => navigate("/app/subscription")}>Subscribe</Button>
-            </div>
-          )}
-          {subState === "trial" && subMessage && !isRestricted && (
-            <div className="mx-4 mt-3 rounded-lg border border-secondary/20 bg-secondary/5 px-4 py-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-secondary shrink-0" />
-              <p className="text-xs text-foreground font-body flex-1">{subMessage}</p>
-              <Button variant="outline" size="sm" className="ml-auto shrink-0 text-xs" onClick={() => navigate("/app/subscription")}>View Plans</Button>
-            </div>
-          )}
-          {subState === "grace" && subMessage && (
-            <div className="mx-4 mt-3 rounded-lg border border-warning/20 bg-warning/5 px-4 py-3 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
-              <p className="text-xs text-foreground font-body flex-1">{subMessage}</p>
-              <Button variant="outline" size="sm" className="ml-auto shrink-0 text-xs" onClick={() => navigate("/app/subscription")}>Renew</Button>
-            </div>
-          )}
           <Outlet />
         </main>
       </div>

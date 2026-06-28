@@ -160,18 +160,6 @@ const AppSettings = () => {
           </Card>
         )}
 
-        {/* Subscription & Billing */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-accent" /><CardTitle className="text-sm font-bold font-body">Subscription & Billing</CardTitle></div>
-            <CardDescription className="text-xs font-body">Manage your plan, renewal, and billing</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" className="w-full text-xs font-body" onClick={() => navigate("/app/subscription")}>
-              <CreditCard className="mr-1.5 h-3 w-3" /> View Subscription
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Legal & Trust */}
         <Card>
