@@ -1,0 +1,1 @@
+UPDATE profiles SET access_status = 'approved' WHERE email = 'owner@mjwgroup.co.za';
