@@ -69,22 +69,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
     });
     if (!error && data.user) {
-      // Send USER_CREATED event
       sendSentraWebhook("USER_CREATED", data.user.id);
-
-      // Create 7-day trial subscription
-      const now = new Date();
-      const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      await supabase.from("subscription_status").insert({
-        user_id: data.user.id,
-        plan: "trial",
-        status: "trial",
-        started_at: now.toISOString(),
-        expires_at: trialEnd.toISOString(),
-      } as any);
-
-      // Send TRIAL_STARTED event
-      sendSentraWebhook("TRIAL_STARTED", data.user.id, "trial", 0);
+      try {
+        const now = new Date();
+        const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        await supabase.from("subscription_status").insert({
+          user_id: data.user.id,
+          plan: "trial",
+          status: "trial",
+          started_at: now.toISOString(),
+          expires_at: trialEnd.toISOString(),
+        } as any);
+        sendSentraWebhook("TRIAL_STARTED", data.user.id, "trial", 0);
+      } catch (_) { /* subscription table not yet available */ }
     }
     return { error: error as Error | null };
   };

@@ -45,60 +45,15 @@ import Security from "@/pages/Security";
 import NotFound from "@/pages/NotFound";
 import Install from "@/pages/Install";
 import ComplianceSettings from "@/pages/ComplianceSettings";
-import ComplianceConsentModal from "@/components/ComplianceConsentModal";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const [accessStatus, setAccessStatus] = useState<string | null>(null);
-  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
-  const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) { setChecking(false); return; }
-
-    const check = async () => {
-      // Check access status
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("access_status")
-        .eq("user_id", user.id)
-        .single();
-      setAccessStatus((profile as any)?.access_status ?? null);
-
-      // Check compliance consent
-      const { data: consents } = await supabase
-        .from("compliance_consents")
-        .select("id")
-        .eq("user_id", user.id)
-        .limit(1);
-      setHasConsent(consents && consents.length > 0);
-
-      setChecking(false);
-    };
-    check();
-  }, [user, loading]);
-
-  if (loading || checking) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground font-body">Loading…</p></div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground font-body">Loading…</p></div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (accessStatus !== "approved") return <Navigate to="/auth" replace />;
-
-  // Show compliance consent modal if not yet accepted
-  if (hasConsent === false) {
-    return (
-      <ComplianceConsentModal
-        open={true}
-        userId={user.id}
-        userEmail={user.email ?? ""}
-        onAccepted={() => setHasConsent(true)}
-      />
-    );
-  }
 
   return <>{children}</>;
 };
