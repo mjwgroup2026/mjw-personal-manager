@@ -31,7 +31,7 @@ const defaultData: PersonalDataStore = {
   tasks: [],
   habits: [],
   journal: [],
-  money: { accounts: [], salary: 0, spendingPressure: 0 },
+  money: { accounts: [], salary: 0, spendingPressure: 0, monthlyIncome: 0, categories: [], transactions: [] },
   projects: [],
   people: [],
   calendarEvents: [],

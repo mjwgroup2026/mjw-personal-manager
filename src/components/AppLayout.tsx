@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ArrowLeftRight, Calculator, Building2, ClipboardList,
   FileText, Receipt, LogOut, Plus, Home, Users, DollarSign, Car, Upload,
   BarChart3, Settings, UserCircle, Menu, ChevronDown,
-  Flame, BookOpen, CalendarDays, FolderKanban, Pill, Heart, ListTodo, Sparkles,
+  Flame, BookOpen, CalendarDays, FolderKanban, Pill, Heart, ListTodo, Sparkles, Wallet,
 } from "lucide-react";
 import mjwLogo from "@/assets/mjw-logo.png";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ const navSections = [
       { to: "/app/projects", icon: FolderKanban, label: "Projects" },
       { to: "/app/health", icon: Heart, label: "Health" },
       { to: "/app/medications", icon: Pill, label: "Medication" },
+      { to: "/app/personal-budget", icon: Wallet, label: "Budget" },
     ],
   },
   {

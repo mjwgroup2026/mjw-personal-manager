@@ -49,10 +49,31 @@ export interface MoneyAccount {
   currency?: string;
 }
 
+export interface BudgetCategory {
+  id: string;
+  name: string;
+  budget: number;
+  color: string;
+  icon?: string;
+}
+
+export interface BudgetTransaction {
+  id: string;
+  categoryId?: string;
+  amount: number;
+  description: string;
+  date: string; // YYYY-MM-DD
+  type: "expense" | "income";
+  createdAt: string;
+}
+
 export interface MoneyData {
   accounts: MoneyAccount[];
-  salary?: number; // monthly net
-  spendingPressure?: number; // 0-100
+  salary?: number;
+  spendingPressure?: number;
+  monthlyIncome?: number;
+  categories: BudgetCategory[];
+  transactions: BudgetTransaction[];
 }
 
 export type ProjectStatus = "active" | "paused" | "done";

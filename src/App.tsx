@@ -55,6 +55,7 @@ import PersonalPeople from "@/pages/PersonalPeople";
 import PersonalProjects from "@/pages/PersonalProjects";
 import PersonalHealth from "@/pages/PersonalHealth";
 import PersonalMedications from "@/pages/PersonalMedications";
+import PersonalBudget from "@/pages/PersonalBudget";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,7 @@ const App = () => (
               <Route path="projects" element={<PersonalProjects />} />
               <Route path="health" element={<PersonalHealth />} />
               <Route path="medications" element={<PersonalMedications />} />
+              <Route path="personal-budget" element={<PersonalBudget />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
