@@ -253,7 +253,7 @@ const Auth = () => {
         <div className="border-t border-white/5 px-10 py-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-white/20 font-body">
-              MJW Business Solutions (Pty) Ltd · Reg: 2020/924581/07
+              MJW Group
             </p>
             <div className="flex gap-4">
               <button onClick={() => navigate('/privacy')} className="text-[11px] text-white/25 hover:text-white/50 transition-colors font-body">Privacy</button>
@@ -365,7 +365,7 @@ const Auth = () => {
 
         <div className="border-t border-border px-6 py-3 text-center lg:hidden">
           <p className="text-[10px] text-muted-foreground font-body">
-            MJW Business Solutions (Pty) Ltd · Reg: 2020/924581/07
+            MJW Group
           </p>
         </div>
       </div>

@@ -1,16 +1,15 @@
-import LegalPageLayout from "@/components/LegalPageLayout";
+﻿import LegalPageLayout from "@/components/LegalPageLayout";
 
 const Privacy = () => (
   <LegalPageLayout title="Privacy Policy">
     <p className="text-xs italic">Effective date: 01 March 2026 · Last updated: 01 March 2026</p>
 
-    <p>Ledgera is owned and operated by MJW Business Solutions (Pty) Ltd, Registration Number 2020/924581/07, trading as MJW Group ("MJW Group", "Ledgera", "we", "us", or "our").</p>
+    <p>Ledgera is part of MJW Group ("MJW Group", "Ledgera", "we", "us", or "our").</p>
 
     <h3>Contact details</h3>
     <p>
       Email: <a href="mailto:ledgera@mjwgroup.co.za" className="underline">ledgera@mjwgroup.co.za</a><br />
       Website: <a href="https://www.mjwgroup.co.za" target="_blank" rel="noopener noreferrer" className="underline">www.mjwgroup.co.za</a><br />
-      Address: River Road, Sonkring, Cape Town, 7560, South Africa<br />
       Tel: 021 180 4244
     </p>
 
@@ -83,7 +82,6 @@ const Privacy = () => (
       <strong>Ledgera / MJW Group</strong><br />
       Email: <a href="mailto:ledgera@mjwgroup.co.za" className="underline">ledgera@mjwgroup.co.za</a><br />
       Website: <a href="https://www.mjwgroup.co.za" target="_blank" rel="noopener noreferrer" className="underline">www.mjwgroup.co.za</a><br />
-      Address: River Road, Sonkring, Cape Town, 7560, South Africa<br />
       Tel: 021 180 4244
     </p>
   </LegalPageLayout>

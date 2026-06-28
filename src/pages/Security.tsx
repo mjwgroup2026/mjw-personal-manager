@@ -1,10 +1,10 @@
-import LegalPageLayout from "@/components/LegalPageLayout";
+﻿import LegalPageLayout from "@/components/LegalPageLayout";
 
 const Security = () => (
   <LegalPageLayout title="Security">
     <p className="text-xs italic">Effective date: 01 March 2026 · Last updated: 01 March 2026</p>
 
-    <p>Ledgera is owned and operated by MJW Business Solutions (Pty) Ltd, Registration Number 2020/924581/07, trading as MJW Group.</p>
+    <p>Ledgera is part of MJW Group.</p>
     <p>Ledgera takes the security of your financial data seriously. This page outlines the security measures in place to protect your account and information.</p>
 
     <h2>1. Account Security</h2>
@@ -40,7 +40,6 @@ const Security = () => (
       <strong>Ledgera / MJW Group</strong><br />
       Email: <a href="mailto:ledgera@mjwgroup.co.za" className="underline">ledgera@mjwgroup.co.za</a><br />
       Website: <a href="https://www.mjwgroup.co.za" target="_blank" rel="noopener noreferrer" className="underline">www.mjwgroup.co.za</a><br />
-      Address: River Road, Sonkring, Cape Town, 7560, South Africa<br />
       Tel: 021 180 4244
     </p>
   </LegalPageLayout>

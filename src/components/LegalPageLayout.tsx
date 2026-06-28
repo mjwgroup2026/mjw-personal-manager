@@ -33,11 +33,8 @@ const LegalPageLayout = ({ title, children }: { title: string; children: React.R
             <button onClick={() => navigate("/security")} className="hover:text-foreground transition-colors">Security</button>
             <a href="mailto:ledgera@mjwgroup.co.za" className="hover:text-foreground transition-colors">Contact Us</a>
           </div>
-          <p className="text-[11px] text-muted-foreground text-center">
-            Owned and operated by MJW Business Solutions (Pty) Ltd · Reg: 2020/924581/07 · t/a MJW Group
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground/60 text-center">
-            © {new Date().getFullYear()} MJW Business Solutions (Pty) Ltd. All rights reserved.
+          <p className="text-[11px] text-muted-foreground/60 text-center">
+            Ledgera is part of MJW Group · © {new Date().getFullYear()} MJW Group. All rights reserved.
           </p>
         </div>
       </footer>

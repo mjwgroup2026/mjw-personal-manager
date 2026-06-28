@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEntity } from "@/contexts/EntityContext";
 import { useNavigate } from "react-router-dom";
@@ -220,10 +220,10 @@ const AppSettings = () => {
             <Separator />
             <div className="text-xs text-muted-foreground space-y-1 font-body">
               <p>Ledgera is a product of MJW Group.</p>
-              <p>Owned and operated by MJW Business Solutions (Pty) Ltd</p>
-              <p>Reg: 2020/924581/07 · t/a MJW Group</p>
+              <p>Ledgera, part of MJW Group</p>
+              <p></p>
               <p>Email: ledgera@mjwgroup.co.za · Tel: 021 180 4244</p>
-              <p className="mt-2">© {new Date().getFullYear()} MJW Business Solutions (Pty) Ltd. All rights reserved.</p>
+              <p className="mt-2">© {new Date().getFullYear()} MJW Group. All rights reserved.</p>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
@@ -342,7 +342,7 @@ const Subscription = () => {
         <Card>
           <CardContent className="py-5">
             <div className="text-xs text-muted-foreground font-body space-y-2">
-              <p>Ledgera subscriptions are processed through app store billing or redeem codes issued by MJW Group. MJW Business Solutions (Pty) Ltd does not directly process payment card information.</p>
+              <p>Ledgera subscriptions are processed through app store billing or redeem codes issued by MJW Group. MJW Group does not directly process payment card information.</p>
               <p>For billing enquiries, contact <a href="mailto:ledgera@mjwgroup.co.za" className="text-secondary hover:underline">ledgera@mjwgroup.co.za</a>.</p>
               <p>Subscription terms are governed by the <a href="/terms" className="text-secondary hover:underline">Terms of Service</a>.</p>
             </div>

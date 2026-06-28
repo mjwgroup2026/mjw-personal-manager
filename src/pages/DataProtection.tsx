@@ -1,10 +1,10 @@
-import LegalPageLayout from "@/components/LegalPageLayout";
+﻿import LegalPageLayout from "@/components/LegalPageLayout";
 
 const DataProtection = () => (
   <LegalPageLayout title="Data Policy">
     <p className="text-xs italic">Effective date: 01 March 2026 · Last updated: 01 March 2026</p>
 
-    <p>Ledgera is owned and operated by MJW Business Solutions (Pty) Ltd, Registration Number 2020/924581/07, trading as MJW Group.</p>
+    <p>Ledgera is part of MJW Group.</p>
     <p>This Data Policy explains how Ledgera classifies, handles, protects, stores, exports, and governs data inside the platform.</p>
 
     <h2>1. Purpose</h2>
@@ -40,7 +40,7 @@ const DataProtection = () => (
     <ul><li>audit logs</li><li>change history</li><li>lock status</li><li>review status</li><li>export history</li></ul>
 
     <h2>3. Data ownership and responsibility</h2>
-    <p>The platform operator is MJW Business Solutions (Pty) Ltd t/a MJW Group.</p>
+    <p>The platform is operated by MJW Group.</p>
     <p>Users remain responsible for:</p>
     <ul><li>the lawfulness of the data they upload</li><li>ensuring they have authority to store third-party information in Ledgera</li><li>checking the correctness of accounting, tax, VAT, invoice, and supporting data</li><li>protecting access to their own accounts and devices</li><li>managing who they authorise inside each entity</li></ul>
 
@@ -93,7 +93,6 @@ const DataProtection = () => (
       <strong>Ledgera / MJW Group</strong><br />
       Email: <a href="mailto:ledgera@mjwgroup.co.za" className="underline">ledgera@mjwgroup.co.za</a><br />
       Website: <a href="https://www.mjwgroup.co.za" target="_blank" rel="noopener noreferrer" className="underline">www.mjwgroup.co.za</a><br />
-      Address: River Road, Sonkring, Cape Town, 7560, South Africa<br />
       Tel: 021 180 4244
     </p>
   </LegalPageLayout>
