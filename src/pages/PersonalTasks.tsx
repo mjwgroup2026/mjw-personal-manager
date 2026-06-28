@@ -10,18 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, CheckCircle2, Circle, Clock } from "lucide-react";
 import { format } from "date-fns";
 
-const statusIcons: Record<TaskStatus, React.ReactNode> = {
-  open: <Circle className="h-4 w-4 text-muted-foreground" />,
-  in_progress: <Clock className="h-4 w-4 text-blue-500" />,
-  done: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-  archived: <Circle className="h-4 w-4 text-muted-foreground/40" />,
-};
 const priorityBadge: Record<TaskPriority, string> = {
   critical: "bg-red-100 text-red-700",
   high: "bg-orange-100 text-orange-700",
   medium: "bg-yellow-100 text-yellow-700",
   low: "bg-muted text-muted-foreground",
 };
+const statusLabel: Record<TaskStatus, string> = { open: "Open", paused: "In Progress", done: "Done", archived: "Archived" };
 const blank = (): Omit<Task, "id" | "createdAt" | "updatedAt"> => ({ title: "", area: "Personal", priority: "medium", status: "open" });
 
 export default function PersonalTasks() {
@@ -47,10 +42,11 @@ export default function PersonalTasks() {
   };
 
   const cycleStatus = (id: string) => {
-    const cycle: TaskStatus[] = ["open", "in_progress", "done"];
+    const cycle: TaskStatus[] = ["open", "paused", "done"];
     setTasks((prev) => prev.map((t) => {
       if (t.id !== id) return t;
-      const next = cycle[(cycle.indexOf(t.status as any) + 1) % cycle.length] as TaskStatus;
+      const idx = cycle.indexOf(t.status);
+      const next = cycle[idx === -1 ? 0 : (idx + 1) % cycle.length];
       return { ...t, status: next, updatedAt: new Date().toISOString() };
     }));
   };
@@ -62,6 +58,12 @@ export default function PersonalTasks() {
     setEditId(t.id); setOpen(true);
   };
 
+  const statusIcon = (status: TaskStatus) => {
+    if (status === "done") return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    if (status === "paused") return <Clock className="h-4 w-4 text-blue-500" />;
+    return <Circle className="h-4 w-4 text-muted-foreground" />;
+  };
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-5">
@@ -71,10 +73,10 @@ export default function PersonalTasks() {
         </Button>
       </div>
       <div className="flex gap-2 mb-4 flex-wrap">
-        {(["all", "open", "in_progress", "done"] as const).map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
+        {(["all", "open", "paused", "done"] as const).map((s) => (
+          <button key={s} onClick={() => setFilter(s as TaskStatus | "all")}
             className={`px-3 py-1 rounded-full text-xs font-body font-medium transition-colors ${filter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
-            {s === "all" ? "All" : s === "in_progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
+            {s === "all" ? "All" : s === "paused" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
         ))}
       </div>
@@ -83,7 +85,7 @@ export default function PersonalTasks() {
         {filtered.map((t) => (
           <Card key={t.id} className={t.status === "done" ? "opacity-60" : ""}>
             <CardContent className="py-3 px-4 flex items-start gap-3">
-              <button onClick={() => cycleStatus(t.id)} className="mt-0.5 shrink-0">{statusIcons[t.status]}</button>
+              <button onClick={() => cycleStatus(t.id)} className="mt-0.5 shrink-0">{statusIcon(t.status)}</button>
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(t)}>
                 <p className={`text-sm font-body font-medium ${t.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}>{t.title}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
