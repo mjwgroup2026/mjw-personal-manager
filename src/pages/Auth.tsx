@@ -26,7 +26,7 @@ const Auth = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0a1628' }}>
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <img src={mjwLogo} alt="Ledgera" className="h-10 w-10 animate-pulse" />
       </div>
     );
@@ -66,66 +66,69 @@ const Auth = () => {
 
   if (registrationComplete) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ background: '#0a1628' }}>
-        <div className="w-full max-w-sm rounded-2xl border border-white/8 p-10 text-center" style={{ background: '#0f2040' }}>
-          <CheckCircle className="mx-auto mb-4 h-12 w-12" style={{ color: '#C9A84C' }} />
-          <h2 className="text-lg font-bold text-white font-body mb-2">Account Created</h2>
-          <p className="text-sm text-white/50 font-body mb-4">
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-background">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-sm p-10 text-center">
+          <CheckCircle className="mx-auto mb-4 h-12 w-12 text-success" />
+          <h2 className="text-lg font-bold text-foreground font-display mb-2">Account Created</h2>
+          <p className="text-sm text-muted-foreground font-body mb-1">
             Check your email to verify your account, then sign in.
           </p>
-          <p className="text-sm font-semibold text-white/70 font-body mb-6">{email}</p>
+          <p className="text-sm font-semibold text-foreground font-body mb-6">{email}</p>
           <button
             onClick={() => { setRegistrationComplete(false); setMode('login'); }}
-            className="w-full py-3 rounded-lg font-semibold text-sm font-body transition-opacity hover:opacity-90"
-            style={{ background: '#C9A84C', color: '#0a1628' }}
+            className="w-full py-3 rounded-lg font-semibold text-sm font-body text-white transition-opacity hover:opacity-90 bg-accent"
           >
             Go to Sign In
           </button>
         </div>
-        <FooterLinks navigate={navigate} />
+        <PageFooter navigate={navigate} />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ background: '#0a1628' }}>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-background">
 
       {/* Card */}
-      <div className="w-full max-w-sm rounded-2xl border border-white/8 overflow-hidden" style={{ background: '#0f2040' }}>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
 
-        {/* Header — logo + name + tagline */}
-        <div className="flex flex-col items-center pt-10 pb-6 px-8 text-center border-b border-white/6">
-          <img src={mjwLogo} alt="Ledgera" className="h-16 w-16 mb-4 drop-shadow-lg" />
-          <h1 className="text-2xl font-bold tracking-widest text-white font-body mb-0.5">LEDGERA</h1>
-          <p className="text-[10px] tracking-[0.25em] font-semibold font-body mb-4" style={{ color: '#C9A84C' }}>
-            FINANCIAL MANAGEMENT
+        {/* Header */}
+        <div className="flex flex-col items-center pt-10 pb-7 px-8 text-center border-b border-border">
+          <img src={mjwLogo} alt="Ledgera" className="h-16 w-16 mb-4 drop-shadow" />
+          <h1 className="text-2xl font-bold tracking-widest text-foreground font-display mb-1">LEDGERA</h1>
+          <p className="text-[10px] tracking-[0.3em] font-semibold font-body text-accent uppercase mb-4">
+            Financial Management
           </p>
-          <p className="text-xs text-white/35 font-body leading-relaxed">
+          <p className="text-xs text-muted-foreground font-body leading-relaxed">
             Audit-ready bookkeeping. SARS-aligned tax. Complete financial control.
           </p>
         </div>
 
         {/* Form */}
         <div className="px-8 py-7">
-          <p className="text-xs font-bold tracking-widest text-white/50 font-body mb-5 uppercase">
+          <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground font-body mb-5 uppercase">
             {mode === 'login' ? 'Sign In' : 'Create Account'}
           </p>
 
           {mode === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Email</label>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">
+                  Email
+                </label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.co.za"
                   required
-                  className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] focus:ring-[#C9A84C]/20 font-body text-sm"
+                  className="h-11 font-body text-sm bg-background"
                 />
               </div>
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Password</label>
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">
+                  Password
+                </label>
                 <Input
                   type="password"
                   value={password}
@@ -133,15 +136,14 @@ const Auth = () => {
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] focus:ring-[#C9A84C]/20 font-body text-sm"
+                  className="h-11 font-body text-sm bg-background"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-lg font-bold text-sm font-body tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
-                style={{ background: '#C9A84C', color: '#0a1628' }}
+                className="w-full py-3 rounded-lg font-bold text-sm font-body text-white tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-1 bg-primary"
               >
                 {submitting ? "Please wait…" : <>SIGN IN <ArrowRight className="h-4 w-4" /></>}
               </button>
@@ -150,14 +152,13 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setMode('register')}
-                  className="text-[11px] font-body hover:underline transition-colors"
-                  style={{ color: '#C9A84C' }}
+                  className="text-[11px] font-body text-accent hover:underline transition-colors"
                 >
                   Create Account
                 </button>
                 <button
                   type="button"
-                  className="text-[11px] font-body text-white/30 hover:text-white/60 transition-colors"
+                  className="text-[11px] font-body text-muted-foreground hover:text-foreground transition-colors"
                   onClick={async () => {
                     if (!email) { toast({ title: "Enter your email first", variant: "destructive" }); return; }
                     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
@@ -172,41 +173,40 @@ const Auth = () => {
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Full Name</label>
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Mornay Walters" required className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">Full Name</label>
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Mornay Walters" required className="h-11 font-body text-sm bg-background" />
               </div>
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Email Address</label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.co.za" required className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">Email Address</label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.co.za" required className="h-11 font-body text-sm bg-background" />
               </div>
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Password</label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">Password</label>
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 font-body text-sm bg-background" />
               </div>
               <div>
-                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-white/40 block mb-1.5">Confirm Password</label>
-                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#C9A84C] font-body text-sm" />
+                <label className="text-[10px] tracking-widest font-semibold font-body uppercase text-muted-foreground block mb-1.5">Confirm Password</label>
+                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="h-11 font-body text-sm bg-background" />
               </div>
               <div className="flex items-start gap-2 pt-1">
                 <Checkbox
                   id="terms"
                   checked={agreedTerms}
                   onCheckedChange={(c) => setAgreedTerms(c === true)}
-                  className="mt-0.5 border-white/20 data-[state=checked]:bg-[#C9A84C] data-[state=checked]:border-[#C9A84C]"
+                  className="mt-0.5"
                 />
-                <label htmlFor="terms" className="text-[11px] text-white/35 font-body leading-relaxed cursor-pointer">
+                <label htmlFor="terms" className="text-[11px] text-muted-foreground font-body leading-relaxed cursor-pointer">
                   I agree to the{" "}
-                  <button type="button" onClick={() => navigate('/terms')} className="text-[#C9A84C] hover:underline">Terms</button>
+                  <button type="button" onClick={() => navigate('/terms')} className="text-secondary hover:underline">Terms</button>
                   {" "}and{" "}
-                  <button type="button" onClick={() => navigate('/privacy')} className="text-[#C9A84C] hover:underline">Privacy Policy</button>
+                  <button type="button" onClick={() => navigate('/privacy')} className="text-secondary hover:underline">Privacy Policy</button>
                 </label>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-lg font-bold text-sm font-body tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-1"
-                style={{ background: '#C9A84C', color: '#0a1628' }}
+                className="w-full py-3 rounded-lg font-bold text-sm font-body text-white tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 mt-1 bg-primary"
               >
                 {submitting ? "Please wait…" : <>CREATE ACCOUNT <ArrowRight className="h-4 w-4" /></>}
               </button>
@@ -214,8 +214,7 @@ const Auth = () => {
               <button
                 type="button"
                 onClick={() => setMode('login')}
-                className="w-full text-center text-[11px] font-body pt-1 transition-colors"
-                style={{ color: '#C9A84C' }}
+                className="w-full text-center text-[11px] font-body text-accent hover:underline pt-1"
               >
                 Already have an account? Sign In
               </button>
@@ -224,13 +223,13 @@ const Auth = () => {
         </div>
 
         {/* Card footer */}
-        <div className="border-t border-white/6 px-8 py-4 flex items-center justify-center gap-4 text-[10px] tracking-wider font-body text-white/20">
-          <button onClick={() => navigate('/')} className="hover:text-white/50 transition-colors uppercase">Ledgera</button>
-          <span>|</span>
-          <button onClick={() => navigate('/privacy')} className="hover:text-white/50 transition-colors uppercase">Privacy</button>
-          <span>|</span>
-          <button onClick={() => navigate('/terms')} className="hover:text-white/50 transition-colors uppercase">Terms</button>
-          <span>|</span>
+        <div className="border-t border-border px-8 py-4 flex items-center justify-center gap-3 text-[10px] tracking-wider font-body text-muted-foreground">
+          <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">Ledgera</button>
+          <span>·</span>
+          <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors uppercase">Privacy</button>
+          <span>·</span>
+          <button onClick={() => navigate('/terms')} className="hover:text-foreground transition-colors uppercase">Terms</button>
+          <span>·</span>
           <span className="uppercase">MJW Group</span>
         </div>
       </div>
@@ -239,12 +238,12 @@ const Auth = () => {
   );
 };
 
-const FooterLinks = ({ navigate }: { navigate: (path: string) => void }) => (
-  <div className="mt-6 flex items-center gap-4 text-[10px] tracking-wider font-body text-white/20">
-    <button onClick={() => navigate('/')} className="hover:text-white/50 transition-colors uppercase">Ledgera</button>
-    <span>|</span>
-    <button onClick={() => navigate('/privacy')} className="hover:text-white/50 transition-colors uppercase">Privacy</button>
-    <span>|</span>
+const PageFooter = ({ navigate }: { navigate: (path: string) => void }) => (
+  <div className="mt-6 flex items-center gap-3 text-[10px] tracking-wider font-body text-muted-foreground">
+    <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">Ledgera</button>
+    <span>·</span>
+    <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors uppercase">Privacy</button>
+    <span>·</span>
     <span className="uppercase">MJW Group</span>
   </div>
 );
