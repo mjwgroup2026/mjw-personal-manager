@@ -1,338 +1,109 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { usePersonalData } from "@/hooks/usePersonalData";
-import { Card, CardContent } from "@/components/ui/card";
+import type { Person } from "@/lib/personal-types";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Users, Phone, Mail, Cake, AlertCircle } from "lucide-react";
-import type { Person } from "@/lib/personal-types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, Users, Phone, Mail } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-const COLOR_OPTIONS = [
-  { value: "#3b82f6", label: "Blue" },
-  { value: "#8b5cf6", label: "Purple" },
-  { value: "#e66e52", label: "Coral" },
-  { value: "#22c55e", label: "Green" },
-  { value: "#f97316", label: "Orange" },
-  { value: "#ec4899", label: "Pink" },
-  { value: "#14b8a6", label: "Teal" },
-];
+const COLORS = ["#3b82f6","#a855f7","#22c55e","#f97316","#f43f5e","#06b6d4","#eab308"];
+const blank = (): Partial<Person> => ({ name: "", relation: "", phone: "", email: "", birthday: "", notes: "", color: COLORS[0] });
 
-interface PersonForm {
-  name: string;
-  relation: string;
-  phone: string;
-  email: string;
-  birthday: string;
-  notes: string;
-  color: string;
-}
-
-const defaultForm: PersonForm = {
-  name: "",
-  relation: "",
-  phone: "",
-  email: "",
-  birthday: "",
-  notes: "",
-  color: "#3b82f6",
-};
-
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(" ")
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
-}
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function daysUntilBirthday(birthday: string) {
-  if (!birthday) return null;
-  const today = new Date();
-  const thisYear = today.getFullYear();
-  const bday = new Date(birthday);
-  let next = new Date(thisYear, bday.getMonth(), bday.getDate());
-  if (next < today) next = new Date(thisYear + 1, bday.getMonth(), bday.getDate());
-  const diff = Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diff;
-}
-
-const PersonalPeople = () => {
+export default function PersonalPeople() {
   const { people, setPeople } = usePersonalData();
-  const [newOpen, setNewOpen] = useState(false);
-  const [editPerson, setEditPerson] = useState<Person | null>(null);
-  const [form, setForm] = useState<PersonForm>(defaultForm);
-  const [editForm, setEditForm] = useState<PersonForm>(defaultForm);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<Person>>(blank());
+  const [search, setSearch] = useState("");
 
-  // Upcoming birthdays (within 7 days)
-  const upcomingBirthdays = people.filter((p) => {
-    if (!p.birthday) return false;
-    const days = daysUntilBirthday(p.birthday);
-    return days !== null && days <= 7;
-  });
+  const filtered = people.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
-  function addPerson() {
-    if (!form.name.trim()) return;
-    const p: Person = {
-      id: crypto.randomUUID(),
-      name: form.name.trim(),
-      relation: form.relation || undefined,
-      phone: form.phone || undefined,
-      email: form.email || undefined,
-      birthday: form.birthday || undefined,
-      notes: form.notes || undefined,
-      color: form.color,
-      createdAt: new Date().toISOString(),
-    };
-    setPeople((prev) => [...prev, p]);
-    setForm(defaultForm);
-    setNewOpen(false);
-  }
+  const save = () => {
+    if (!form.name?.trim()) return;
+    const now = new Date().toISOString();
+    if (editId) {
+      setPeople((prev) => prev.map((p) => p.id === editId ? { ...p, ...form } as Person : p));
+    } else {
+      setPeople((prev) => [...prev, { ...form, id: crypto.randomUUID(), createdAt: now } as Person]);
+    }
+    setOpen(false); setForm(blank()); setEditId(null);
+  };
 
-  function openEdit(p: Person) {
-    setEditPerson(p);
-    setEditForm({
-      name: p.name,
-      relation: p.relation ?? "",
-      phone: p.phone ?? "",
-      email: p.email ?? "",
-      birthday: p.birthday ?? "",
-      notes: p.notes ?? "",
-      color: p.color ?? "#3b82f6",
-    });
-  }
-
-  function saveEdit() {
-    if (!editPerson || !editForm.name.trim()) return;
-    setPeople((prev) =>
-      prev.map((p) =>
-        p.id === editPerson.id
-          ? {
-              ...p,
-              name: editForm.name.trim(),
-              relation: editForm.relation || undefined,
-              phone: editForm.phone || undefined,
-              email: editForm.email || undefined,
-              birthday: editForm.birthday || undefined,
-              notes: editForm.notes || undefined,
-              color: editForm.color,
-            }
-          : p
-      )
-    );
-    setEditPerson(null);
-  }
-
-  function deletePerson(id: string) {
-    setPeople((prev) => prev.filter((p) => p.id !== id));
-    setDeleteConfirm(null);
-    setEditPerson(null);
-  }
+  const remove = (id: string) => setPeople((prev) => prev.filter((p) => p.id !== id));
+  const openEdit = (p: Person) => {
+    setForm({ name: p.name, relation: p.relation, phone: p.phone, email: p.email, birthday: p.birthday, notes: p.notes, color: p.color });
+    setEditId(p.id); setOpen(true);
+  };
+  const initials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">People</h1>
-          <Badge variant="secondary">{people.length}</Badge>
-        </div>
-        <Dialog open={newOpen} onOpenChange={setNewOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New Person</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>New Person</DialogTitle></DialogHeader>
-            <PersonFormContent form={form} setForm={setForm} onSave={addPerson} />
-          </DialogContent>
-        </Dialog>
+    <div className="p-6 max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl font-bold font-display flex items-center gap-2"><Users className="h-6 w-6 text-secondary" />People</h1>
+        <Button size="sm" className="bg-primary text-primary-foreground font-body" onClick={() => { setForm(blank()); setEditId(null); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> Add Person
+        </Button>
       </div>
-
-      {/* Upcoming birthdays banner */}
-      {upcomingBirthdays.length > 0 && (
-        <div className="mb-4 rounded-lg bg-purple-50 border border-purple-200 p-3 flex items-start gap-2">
-          <Cake className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-purple-700">Upcoming Birthdays</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {upcomingBirthdays.map((p) => {
-                const days = daysUntilBirthday(p.birthday!);
-                return (
-                  <span key={p.id} className="text-xs text-purple-600">
-                    {p.name} {days === 0 ? "(today!)" : `(in ${days}d)`}
-                  </span>
-                );
-              })}
+      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people..." className="mb-4 font-body" />
+      {filtered.length === 0 && <p className="text-sm text-muted-foreground font-body text-center py-10">No people added yet.</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {filtered.map((p) => (
+          <Card key={p.id} className="cursor-pointer hover:shadow-sm transition-shadow" onClick={() => openEdit(p)}>
+            <CardContent className="py-3 px-4 flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold font-body shrink-0" style={{ background: p.color ?? COLORS[0] }}>
+                {initials(p.name)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold font-body text-foreground">{p.name}</p>
+                {p.relation && <p className="text-[11px] text-muted-foreground font-body">{p.relation}</p>}
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {p.phone && <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body"><Phone className="h-2.5 w-2.5" />{p.phone}</span>}
+                  {p.email && <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body"><Mail className="h-2.5 w-2.5" />{p.email}</span>}
+                </div>
+                {p.birthday && <p className="text-[10px] text-muted-foreground font-body mt-0.5">🎂 {format(parseISO(p.birthday), "d MMM")}</p>}
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); remove(p.id); }} className="shrink-0 text-muted-foreground hover:text-destructive transition-colors">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">{editId ? "Edit Person" : "Add Person"}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div><Label className="font-body text-xs mb-1 block">Name *</Label><Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Full name" className="font-body" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="font-body text-xs mb-1 block">Relationship</Label><Input value={form.relation ?? ""} onChange={(e) => setForm((f) => ({ ...f, relation: e.target.value }))} placeholder="e.g. Friend" className="font-body" /></div>
+              <div><Label className="font-body text-xs mb-1 block">Birthday</Label><Input type="date" value={form.birthday ?? ""} onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))} className="font-body" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="font-body text-xs mb-1 block">Phone</Label><Input value={form.phone ?? ""} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+27..." className="font-body" /></div>
+              <div><Label className="font-body text-xs mb-1 block">Email</Label><Input type="email" value={form.email ?? ""} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="font-body" /></div>
+            </div>
+            <div>
+              <Label className="font-body text-xs mb-2 block">Colour</Label>
+              <div className="flex gap-2 flex-wrap">
+                {COLORS.map((c) => (
+                  <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))}
+                    className={`h-6 w-6 rounded-full border-2 transition-all ${form.color === c ? "border-foreground scale-110" : "border-transparent"}`}
+                    style={{ background: c }} />
+                ))}
+              </div>
+            </div>
+            <div><Label className="font-body text-xs mb-1 block">Notes</Label><Textarea value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Any notes..." rows={3} className="font-body text-sm resize-none" /></div>
+            <div className="flex gap-2 pt-1">
+              <Button onClick={save} className="flex-1 bg-primary text-primary-foreground font-body">{editId ? "Save" : "Add Person"}</Button>
+              <Button variant="outline" onClick={() => setOpen(false)} className="font-body">Cancel</Button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* People grid */}
-      {people.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <Users className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm">No people yet. Add someone!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {people.map((p) => {
-            const followUp = p.notes?.toLowerCase().includes("follow up");
-            const daysB = p.birthday ? daysUntilBirthday(p.birthday) : null;
-            return (
-              <Card
-                key={p.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => openEdit(p)}
-              >
-                <CardContent className="p-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                      style={{ backgroundColor: p.color ?? "#3b82f6" }}
-                    >
-                      {getInitials(p.name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{p.name}</p>
-                      {p.relation && <p className="text-xs text-muted-foreground">{p.relation}</p>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    {p.phone && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3 shrink-0" />{p.phone}
-                      </div>
-                    )}
-                    {p.email && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
-                        <Mail className="h-3 w-3 shrink-0" />{p.email}
-                      </div>
-                    )}
-                    {p.birthday && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Cake className="h-3 w-3 shrink-0" />{p.birthday}
-                        {daysB !== null && daysB <= 30 && (
-                          <span className="text-purple-500 font-medium">({daysB === 0 ? "today!" : `${daysB}d`})</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {p.relation && <Badge variant="secondary" className="text-xs">{p.relation}</Badge>}
-                    {followUp && (
-                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-600 border-orange-200">
-                        <AlertCircle className="h-2.5 w-2.5 mr-0.5" /> follow up
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Edit dialog */}
-      <Dialog open={!!editPerson} onOpenChange={(o) => !o && setEditPerson(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Edit Person</DialogTitle></DialogHeader>
-          <PersonFormContent
-            form={editForm}
-            setForm={setEditForm}
-            onSave={saveEdit}
-            onDelete={() => editPerson && (deleteConfirm === editPerson.id ? deletePerson(editPerson.id) : setDeleteConfirm(editPerson.id))}
-            deleteLabel={deleteConfirm === editPerson?.id ? "Confirm delete" : "Delete"}
-          />
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-interface PersonFormContentProps {
-  form: PersonForm;
-  setForm: (f: PersonForm) => void;
-  onSave: () => void;
-  onDelete?: () => void;
-  deleteLabel?: string;
 }
-
-function PersonFormContent({ form, setForm, onSave, onDelete, deleteLabel }: PersonFormContentProps) {
-  return (
-    <div className="flex flex-col gap-3 pt-1 max-h-[70vh] overflow-y-auto pr-1">
-      <div>
-        <Label>Name *</Label>
-        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="mt-1" autoFocus />
-      </div>
-      <div>
-        <Label>Relation</Label>
-        <Input value={form.relation} onChange={(e) => setForm({ ...form, relation: e.target.value })} placeholder="e.g. Friend, Colleague, Family" className="mt-1" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Phone</Label>
-          <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+27..." className="mt-1" />
-        </div>
-        <div>
-          <Label>Birthday</Label>
-          <Input type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} className="mt-1" />
-        </div>
-      </div>
-      <div>
-        <Label>Email</Label>
-        <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" />
-      </div>
-      <div>
-        <Label>Color</Label>
-        <Select value={form.color} onValueChange={(v) => setForm({ ...form, color: v })}>
-          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {COLOR_OPTIONS.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: c.value }} />
-                  {c.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Notes</Label>
-        <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="mt-1" placeholder="Tip: include 'follow up' to flag this person" />
-      </div>
-      <div className="flex gap-2 pt-1">
-        <Button onClick={onSave} disabled={!form.name.trim()} className="flex-1">Save</Button>
-        {onDelete && (
-          <Button variant="destructive" onClick={onDelete}>{deleteLabel ?? "Delete"}</Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default PersonalPeople;

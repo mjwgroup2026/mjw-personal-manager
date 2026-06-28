@@ -1,275 +1,110 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { usePersonalData } from "@/hooks/usePersonalData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, BookOpen, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import type { JournalEntry, JournalMood } from "@/lib/personal-types";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, BookOpen } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-const MOODS: { value: JournalMood; label: string; color: string }[] = [
-  { value: "great", label: "Great", color: "bg-green-100 text-green-700 border-green-200" },
-  { value: "good", label: "Good", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  { value: "okay", label: "Okay", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  { value: "tough", label: "Tough", color: "bg-red-100 text-red-700 border-red-200" },
+const moods: { value: JournalMood; emoji: string; label: string }[] = [
+  { value: "great", emoji: "😄", label: "Great" },
+  { value: "good", emoji: "🙂", label: "Good" },
+  { value: "okay", emoji: "😐", label: "Okay" },
+  { value: "tough", emoji: "😔", label: "Tough" },
 ];
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function wordCount(text: string) {
-  return text.trim() ? text.trim().split(/\s+/).length : 0;
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-ZA", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function moodStyle(mood?: JournalMood) {
-  return MOODS.find((m) => m.value === mood)?.color ?? "bg-slate-100 text-slate-600";
-}
-
-const PersonalJournal = () => {
+export default function PersonalJournal() {
   const { journal, setJournal } = usePersonalData();
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [mood, setMood] = useState<JournalMood>("good");
+  const [content, setContent] = useState("");
 
-  const today = todayStr();
-  const todayEntry = journal.find((j) => j.date === today);
   const sorted = [...journal].sort((a, b) => b.date.localeCompare(a.date));
 
-  const [writeOpen, setWriteOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState(todayEntry?.content ?? "");
-  const [editorMood, setEditorMood] = useState<JournalMood>(todayEntry?.mood ?? "good");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
-  const [editMood, setEditMood] = useState<JournalMood>("good");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
-  function openWrite() {
-    setEditorContent(todayEntry?.content ?? "");
-    setEditorMood(todayEntry?.mood ?? "good");
-    setWriteOpen(true);
-  }
-
-  function saveEntry() {
-    if (!editorContent.trim()) return;
-    if (todayEntry) {
-      setJournal((prev) =>
-        prev.map((j) =>
-          j.id === todayEntry.id
-            ? { ...j, content: editorContent, mood: editorMood, updatedAt: new Date().toISOString() }
-            : j
-        )
-      );
+  const openNew = () => {
+    setEditId(null); setDate(format(new Date(), "yyyy-MM-dd")); setMood("good"); setContent(""); setOpen(true);
+  };
+  const openEdit = (e: JournalEntry) => {
+    setEditId(e.id); setDate(e.date); setMood(e.mood ?? "good"); setContent(e.content); setOpen(true);
+  };
+  const save = () => {
+    if (!content.trim()) return;
+    const now = new Date().toISOString();
+    if (editId) {
+      setJournal((prev) => prev.map((e) => e.id === editId ? { ...e, date, mood, content, updatedAt: now } : e));
     } else {
-      const entry: JournalEntry = {
-        id: crypto.randomUUID(),
-        date: today,
-        content: editorContent,
-        mood: editorMood,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setJournal((prev) => [entry, ...prev]);
+      setJournal((prev) => [...prev, { id: crypto.randomUUID(), date, mood, content, createdAt: now, updatedAt: now }]);
     }
-    setWriteOpen(false);
-  }
-
-  function startEdit(j: JournalEntry) {
-    setEditingId(j.id);
-    setEditContent(j.content);
-    setEditMood(j.mood ?? "good");
-  }
-
-  function saveInlineEdit(id: string) {
-    setJournal((prev) =>
-      prev.map((j) =>
-        j.id === id
-          ? { ...j, content: editContent, mood: editMood, updatedAt: new Date().toISOString() }
-          : j
-      )
-    );
-    setEditingId(null);
-  }
-
-  function deleteEntry(id: string) {
-    setJournal((prev) => prev.filter((j) => j.id !== id));
-    setDeleteConfirm(null);
-    setExpandedId(null);
-  }
+    setOpen(false);
+  };
+  const remove = (id: string) => setJournal((prev) => prev.filter((e) => e.id !== id));
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Journal</h1>
-          <Badge variant="secondary">{journal.length} entries</Badge>
-        </div>
-        <Button size="sm" onClick={openWrite}>
-          <Plus className="mr-1 h-4 w-4" />
-          {todayEntry ? "Edit today" : "Write today"}
+    <div className="p-6 max-w-2xl mx-auto">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl font-bold font-display flex items-center gap-2"><BookOpen className="h-6 w-6 text-secondary" />Journal</h1>
+        <Button size="sm" className="bg-primary text-primary-foreground font-body" onClick={openNew}>
+          <Plus className="h-4 w-4 mr-1" /> New Entry
         </Button>
       </div>
-
-      {/* Write dialog */}
-      <Dialog open={writeOpen} onOpenChange={setWriteOpen}>
+      {sorted.length === 0 && <p className="text-sm text-muted-foreground font-body text-center py-10">No journal entries yet. Write your first one.</p>}
+      <div className="space-y-3">
+        {sorted.map((e) => {
+          const moodObj = moods.find((m) => m.value === e.mood);
+          return (
+            <Card key={e.id} className="cursor-pointer hover:shadow-sm transition-shadow">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{moodObj?.emoji ?? "📝"}</span>
+                    <div>
+                      <p className="text-sm font-bold font-body text-foreground">{format(parseISO(e.date), "EEEE, d MMMM yyyy")}</p>
+                      <p className="text-[10px] text-muted-foreground font-body">{moodObj?.label ?? "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}><BookOpen className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => remove(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4 pb-4" onClick={() => openEdit(e)}>
+                <p className="text-sm text-foreground font-body line-clamp-3 leading-relaxed">{e.content}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {todayEntry ? "Edit today's entry" : "Write today's entry"} — {formatDate(today)}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 pt-1">
+          <DialogHeader><DialogTitle className="font-display">{editId ? "Edit Entry" : "New Journal Entry"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-body" />
             <div>
-              <Label>Mood</Label>
-              <div className="flex gap-2 mt-1 flex-wrap">
-                {MOODS.map((m) => (
-                  <button
-                    key={m.value}
-                    onClick={() => setEditorMood(m.value)}
-                    className={`px-3 py-1 rounded-full border text-sm font-medium transition-all ${
-                      editorMood === m.value ? m.color : "bg-background text-muted-foreground border-border"
-                    }`}
-                  >
-                    {m.label}
+              <p className="text-xs font-body text-muted-foreground mb-2">How are you feeling?</p>
+              <div className="flex gap-2">
+                {moods.map((m) => (
+                  <button key={m.value} onClick={() => setMood(m.value)}
+                    className={`flex-1 py-2 rounded-lg text-center text-lg transition-all border ${mood === m.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}>
+                    {m.emoji}
+                    <p className="text-[9px] font-body text-muted-foreground mt-0.5">{m.label}</p>
                   </button>
                 ))}
               </div>
             </div>
-            <div>
-              <Label>Entry</Label>
-              <Textarea
-                value={editorContent}
-                onChange={(e) => setEditorContent(e.target.value)}
-                placeholder="What's on your mind today?"
-                rows={8}
-                className="mt-1"
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground mt-1">{wordCount(editorContent)} words</p>
+            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write about your day..." rows={7} className="font-body text-sm resize-none" />
+            <div className="flex gap-2">
+              <Button onClick={save} className="flex-1 bg-primary text-primary-foreground font-body">{editId ? "Save" : "Add Entry"}</Button>
+              <Button variant="outline" onClick={() => setOpen(false)} className="font-body">Cancel</Button>
             </div>
-            <Button onClick={saveEntry} disabled={!editorContent.trim()}>
-              Save Entry
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Entries list */}
-      {sorted.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <BookOpen className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm">No entries yet. Start writing!</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {sorted.map((j) => {
-            const isExpanded = expandedId === j.id;
-            const isEditing = editingId === j.id;
-            const mood = MOODS.find((m) => m.value === j.mood);
-
-            return (
-              <Card key={j.id} className={j.date === today ? "border-primary/40" : ""}>
-                <CardHeader
-                  className="pb-2 cursor-pointer"
-                  onClick={() => {
-                    if (!isEditing) setExpandedId(isExpanded ? null : j.id);
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-sm font-semibold">{formatDate(j.date)}</CardTitle>
-                      {j.date === today && <Badge variant="outline" className="text-xs border-primary text-primary">Today</Badge>}
-                      {mood && (
-                        <Badge variant="outline" className={`text-xs ${mood.color}`}>
-                          {mood.label}
-                        </Badge>
-                      )}
-                      <span className="text-xs text-muted-foreground">{wordCount(j.content)} words</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {!isExpanded && !isEditing ? (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{j.content}</p>
-                  ) : isEditing ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex gap-2 flex-wrap">
-                        {MOODS.map((m) => (
-                          <button
-                            key={m.value}
-                            onClick={() => setEditMood(m.value)}
-                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-all ${
-                              editMood === m.value ? m.color : "bg-background text-muted-foreground border-border"
-                            }`}
-                          >
-                            {m.label}
-                          </button>
-                        ))}
-                      </div>
-                      <Textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        rows={6}
-                        autoFocus
-                      />
-                      <p className="text-xs text-muted-foreground">{wordCount(editContent)} words</p>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => saveInlineEdit(j.id)}>Save</Button>
-                        <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-sm whitespace-pre-wrap">{j.content}</p>
-                      <div className="mt-3 flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(j)}>Edit</Button>
-                        {deleteConfirm === j.id ? (
-                          <>
-                            <Button size="sm" variant="destructive" onClick={() => deleteEntry(j.id)}>Confirm delete</Button>
-                            <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-                          </>
-                        ) : (
-                          <Button size="sm" variant="ghost" onClick={() => setDeleteConfirm(j.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
-};
-
-export default PersonalJournal;
+}

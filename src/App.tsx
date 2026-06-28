@@ -46,6 +46,15 @@ import NotFound from "@/pages/NotFound";
 import Install from "@/pages/Install";
 import ComplianceSettings from "@/pages/ComplianceSettings";
 import { useSubscription } from "@/hooks/useSubscription";
+import Today from "@/pages/Today";
+import PersonalTasks from "@/pages/PersonalTasks";
+import PersonalHabits from "@/pages/PersonalHabits";
+import PersonalJournal from "@/pages/PersonalJournal";
+import PersonalCalendar from "@/pages/PersonalCalendar";
+import PersonalPeople from "@/pages/PersonalPeople";
+import PersonalProjects from "@/pages/PersonalProjects";
+import PersonalHealth from "@/pages/PersonalHealth";
+import PersonalMedications from "@/pages/PersonalMedications";
 
 const queryClient = new QueryClient();
 
@@ -140,6 +149,16 @@ const App = () => (
               <Route path="subscription" element={<Subscription />} />
               <Route path="account-deletion" element={<AccountDeletion />} />
               <Route path="compliance" element={<ComplianceSettings />} />
+              {/* Personal section */}
+              <Route path="today" element={<Today />} />
+              <Route path="tasks" element={<PersonalTasks />} />
+              <Route path="habits" element={<PersonalHabits />} />
+              <Route path="journal" element={<PersonalJournal />} />
+              <Route path="calendar" element={<PersonalCalendar />} />
+              <Route path="people" element={<PersonalPeople />} />
+              <Route path="projects" element={<PersonalProjects />} />
+              <Route path="health" element={<PersonalHealth />} />
+              <Route path="medications" element={<PersonalMedications />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
