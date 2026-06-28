@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import mjwLogo from "@/assets/mjw-logo.png";
@@ -13,7 +13,7 @@ const LegalPageLayout = ({ title, children }: { title: string; children: React.R
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2.5">
-            <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-6 w-6" />
+            <img src={mjwLogo} alt="Ledgera" className="h-6 w-6" />
             <span className="text-sm font-bold tracking-tight">Ledgera</span>
           </div>
         </div>

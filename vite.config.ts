@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
       manifest: {
-        name: "MJW Personal Manager",
-        short_name: "MJW PM",
-        description: "Audit-ready financial control platform by MJW Group",
+        name: "Ledgera",
+        short_name: "Ledgera",
+        description: "Audit-ready financial control and personal management by MJW Group",
         theme_color: "#0D1B2A",
         background_color: "#0D1B2A",
         display: "standalone",

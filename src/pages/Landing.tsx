@@ -46,7 +46,7 @@ const Landing = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Opens default mail client with pre-filled fields
-    const subject = encodeURIComponent("Request Access — Ledgera MJW Personal Manager");
+    const subject = encodeURIComponent("Request Access — Ledgera");
     const body = encodeURIComponent(`Name: ${formName}\nEmail: ${formEmail}\n\n${formMessage}`);
     window.location.href = `mailto:info@mjwgroup.co.za?subject=${subject}&body=${body}`;
     setFormSent(true);
@@ -61,7 +61,7 @@ const Landing = () => {
             <img src={mjwLogo} alt="Ledgera" className="h-9 w-9" />
             <div className="flex flex-col">
               <span className="text-sm font-bold text-white tracking-tight font-display">Ledgera</span>
-              <span className="text-[10px] text-white/35 font-body -mt-0.5">MJW Personal Manager</span>
+              <span className="text-[10px] text-white/35 font-body -mt-0.5">by MJW Group</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -91,8 +91,7 @@ const Landing = () => {
               <h1 className="mb-2 text-3xl font-bold text-white md:text-4xl lg:text-[2.75rem] leading-[1.15] font-display tracking-[0.04em]">
                 Ledgera
               </h1>
-              <p className="mb-1 text-lg text-accent font-semibold font-body tracking-wide">MJW Personal Manager</p>
-              <p className="mb-5 text-sm text-white/35 font-body">by MJW Group</p>
+              <p className="mb-5 text-sm text-white/35 font-body">part of MJW Group</p>
 
               <p className="mb-8 text-base text-white/50 leading-relaxed max-w-lg font-body">
                 SARS-aligned bookkeeping, VAT tracking, income tax monitoring, and audit-ready exports — combined with personal life management: tasks, habits, journal, calendar, health, and relationships.
@@ -203,7 +202,7 @@ const Landing = () => {
         <div className="mx-auto max-w-2xl px-6 py-20 text-center">
           <h2 className="mb-3 text-2xl font-bold text-white font-display tracking-[0.04em]">Request Access</h2>
           <p className="mb-8 text-sm text-white/40 max-w-md mx-auto font-body">
-            Ledgera — MJW Personal Manager is currently invite-only. Fill in your details and we'll be in touch.
+            Ledgera is currently invite-only. Fill in your details and we'll be in touch.
           </p>
 
           {formSent ? (
@@ -269,7 +268,7 @@ const Landing = () => {
               <img src={mjwLogo} alt="Ledgera" className="h-8 w-8" />
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-white font-display">Ledgera</span>
-                <span className="text-[10px] text-white/30 font-body">MJW Personal Manager · by MJW Group</span>
+                <span className="text-[10px] text-white/30 font-body">part of MJW Group</span>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/40 font-body">
@@ -277,13 +276,12 @@ const Landing = () => {
               <button onClick={() => navigate("/terms")} className="hover:text-white/70 transition-colors">Terms of Service</button>
               <button onClick={() => navigate("/data-protection")} className="hover:text-white/70 transition-colors">Data Policy</button>
               <button onClick={() => navigate("/security")} className="hover:text-white/70 transition-colors">Security</button>
-              <button onClick={() => navigate("/account-deletion")} className="hover:text-white/70 transition-colors">Account Deletion</button>
               <a href="mailto:info@mjwgroup.co.za" className="hover:text-white/70 transition-colors">Contact Us</a>
             </div>
           </div>
           <div className="mt-6 border-t border-white/5 pt-4 text-center">
             <p className="text-[11px] text-white/20 font-body">
-              © {new Date().getFullYear()} MJW Group. All rights reserved.
+              Ledgera is part of MJW Group · © {new Date().getFullYear()} MJW Group. All rights reserved.
             </p>
           </div>
         </div>

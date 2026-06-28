@@ -6,6 +6,7 @@ import {
   LayoutDashboard, ArrowLeftRight, Calculator, Building2, ClipboardList,
   FileText, Receipt, LogOut, Plus, Home, Users, DollarSign, Car, Upload,
   BarChart3, Settings, UserCircle, Menu, ChevronDown, AlertTriangle, Clock, Lock,
+  Flame, BookOpen, CalendarDays, FolderKanban, Pill, Heart, ListTodo, Sparkles,
 } from "lucide-react";
 import mjwLogo from "@/assets/mjw-logo.png";
 import { Button } from "@/components/ui/button";
@@ -20,19 +21,28 @@ const entityTypeLabels: Record<string, string> = {
 
 const navSections = [
   {
-    label: "Core",
+    label: "Personal",
     items: [
-      { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
-      { to: "/app/entities", icon: Building2, label: "Entities" },
-      { to: "/app/customers", icon: UserCircle, label: "Customers" },
-      { to: "/app/suppliers", icon: Users, label: "Suppliers" },
+      { to: "/app/today", icon: Sparkles, label: "Today" },
+      { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
+      { to: "/app/habits", icon: Flame, label: "Habits" },
+      { to: "/app/journal", icon: BookOpen, label: "Journal" },
+      { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
+      { to: "/app/people", icon: Users, label: "People" },
+      { to: "/app/projects", icon: FolderKanban, label: "Projects" },
+      { to: "/app/health", icon: Heart, label: "Health" },
+      { to: "/app/medications", icon: Pill, label: "Medication" },
     ],
   },
   {
-    label: "Accounting",
+    label: "Finance",
     items: [
+      { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
+      { to: "/app/entities", icon: Building2, label: "Entities" },
       { to: "/app/transactions", icon: ArrowLeftRight, label: "Transactions" },
       { to: "/app/invoices", icon: Receipt, label: "Invoices" },
+      { to: "/app/customers", icon: UserCircle, label: "Customers" },
+      { to: "/app/suppliers", icon: Users, label: "Suppliers" },
       { to: "/app/documents", icon: FileText, label: "Documents" },
       { to: "/app/imports", icon: Upload, label: "Imports" },
     ],
@@ -79,9 +89,9 @@ const AppLayout = () => {
     <div className="flex h-full flex-col" style={{ background: '#0D1B2A' }}>
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
-        <img src={mjwLogo} alt="MJW Personal Manager" className="h-9 w-9" />
+        <img src={mjwLogo} alt="Ledgera" className="h-9 w-9" />
         <div className="flex flex-col">
-          <span className="text-sm font-bold text-white tracking-tight font-body">MJW Personal Manager</span>
+          <span className="text-sm font-bold text-white tracking-tight font-body">Ledgera</span>
           <span className="text-[9px] text-white/25 font-body leading-none mt-0.5">by MJW Group</span>
         </div>
       </div>
@@ -219,8 +229,8 @@ const AppLayout = () => {
       <div className="flex flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <img src={mjwLogo} alt="MJW Personal Manager" className="h-8 w-8" />
-            <span className="text-sm font-bold tracking-tight font-body">MJW Personal Manager</span>
+            <img src={mjwLogo} alt="Ledgera" className="h-8 w-8" />
+            <span className="text-sm font-bold tracking-tight font-body">Ledgera</span>
           </div>
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>

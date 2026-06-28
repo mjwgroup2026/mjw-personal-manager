@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,7 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center px-6" style={{ background: '#0D1B2A' }}>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center pb-4">
-          <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="mx-auto h-12 w-12 mb-3" />
+          <img src={mjwLogo} alt="Ledgera" className="mx-auto h-12 w-12 mb-3" />
           <CardTitle className="text-xl font-display">Set New Password</CardTitle>
           <CardDescription className="font-body text-sm">Enter your new password below</CardDescription>
         </CardHeader>

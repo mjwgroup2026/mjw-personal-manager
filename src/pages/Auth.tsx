@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +62,7 @@ const Auth = () => {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: '#0D1B2A' }}>
         <div className="flex items-center gap-3">
-          <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-10 w-10 animate-pulse" />
+          <img src={mjwLogo} alt="Ledgera" className="h-10 w-10 animate-pulse" />
           <p className="text-sm text-white/50 font-body">Loading...</p>
         </div>
       </div>
@@ -168,7 +168,7 @@ const Auth = () => {
         <Card className="w-full max-w-sm border-border shadow-xl">
           <CardContent className="pt-8 pb-6">
             <div className="text-center mb-6">
-              <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="mx-auto h-12 w-12 mb-3" />
+              <img src={mjwLogo} alt="Ledgera" className="mx-auto h-12 w-12 mb-3" />
             </div>
             
             {accessStatus === 'pending' && (
@@ -221,7 +221,7 @@ const Auth = () => {
       <div className="hidden w-1/2 flex-col justify-between lg:flex" style={{ background: '#0D1B2A' }}>
         <div className="p-10">
           <div className="flex items-center gap-3">
-            <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-11 w-11" />
+            <img src={mjwLogo} alt="Ledgera" className="h-11 w-11" />
             <div className="flex flex-col">
               <span className="text-lg font-bold text-white tracking-tight font-body">Ledgera</span>
               <span className="text-[10px] text-white/30 font-body">by MJW Group</span>
@@ -231,7 +231,7 @@ const Auth = () => {
 
         {/* Large centred logo */}
         <div className="flex flex-1 flex-col items-center justify-center px-10">
-          <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-40 w-40 mb-8 drop-shadow-2xl" />
+          <img src={mjwLogo} alt="Ledgera" className="h-40 w-40 mb-8 drop-shadow-2xl" />
           <h1 className="mb-4 text-3xl font-bold text-white leading-tight font-display text-center">
             Accounting & Tax<br />Operations Platform
           </h1>
@@ -269,7 +269,7 @@ const Auth = () => {
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
           {/* Mobile logo */}
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-24 w-24 mb-2" />
+            <img src={mjwLogo} alt="Ledgera" className="h-24 w-24 mb-2" />
             <div className="flex flex-col items-center">
               <span className="text-lg font-bold text-foreground font-body">Ledgera</span>
               <span className="text-[10px] text-muted-foreground font-body">by MJW Group</span>

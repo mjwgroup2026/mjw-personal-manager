@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Download, Smartphone, Monitor, CheckCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ const Install = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "#0D1B2A" }}>
       <div className="w-full max-w-md text-center">
-        <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="h-20 w-20 mx-auto mb-6" />
+        <img src={mjwLogo} alt="Ledgera" className="h-20 w-20 mx-auto mb-6" />
         <h1 className="text-2xl font-bold text-white font-display tracking-wide mb-2">
           Install Ledgera
         </h1>
