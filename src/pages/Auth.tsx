@@ -40,22 +40,13 @@ const Auth = () => {
 
   const checkAccessStatus = async () => {
     if (!user) return;
-    const { data } = await supabase
+    // Auto-approve: all registered users get direct access
+    await supabase
       .from("profiles")
-      .select("access_status")
+      .update({ access_status: 'approved' } as any)
       .eq("user_id", user.id)
-      .single();
-    
-    const status = (data as any)?.access_status as AccessStatus;
-    setAccessStatus(status);
-    
-    if (status === 'approved') {
-      // Allow through
-    } else if (status === 'pending') {
-      setMode('access');
-    } else if (status === 'rejected') {
-      setMode('access');
-    }
+      .eq("access_status", "pending");
+    setAccessStatus('approved');
   };
 
   if (loading) {
