@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Lock } from "lucide-react";
-import ledgeraLogo from "@/assets/ledgera-logo.png";
+import mjwLogo from "@/assets/mjw-logo.png";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -105,7 +105,7 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center px-6" style={{ background: '#0D1B2A' }}>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center pb-4">
-          <img src={ledgeraLogo} alt="Ledgera" className="mx-auto h-12 w-12 mb-3" />
+          <img src={mjwLogo} alt="Ledgera — MJW Personal Manager" className="mx-auto h-12 w-12 mb-3" />
           <CardTitle className="text-xl font-display">Set New Password</CardTitle>
           <CardDescription className="font-body text-sm">Enter your new password below</CardDescription>
         </CardHeader>

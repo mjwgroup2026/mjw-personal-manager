@@ -14,7 +14,7 @@ import {
   UserCircle, Building2, Shield, Lock, FileText, Settings, Scale, Eye,
   CreditCard, Trash2, Receipt, Calculator, Download, ClipboardList, KeyRound
 } from "lucide-react";
-import ledgeraLogo from "@/assets/ledgera-logo.png";
+import mjwLogo from "@/assets/mjw-logo.png";
 
 const entityTypeLabels: Record<string, string> = {
   personal: "Personal", sole_prop: "Sole Prop", pty_ltd: "PTY Ltd", trust: "Trust", landlord: "Landlord",
@@ -212,7 +212,7 @@ const AppSettings = () => {
         {/* Platform Info */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2"><img src={ledgeraLogo} alt="" className="h-4 w-4" /><CardTitle className="text-sm font-bold font-body">Platform</CardTitle></div>
+            <div className="flex items-center gap-2"><img src={mjwLogo} alt="" className="h-4 w-4" /><CardTitle className="text-sm font-bold font-body">Platform</CardTitle></div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground font-body">Product</span><span className="text-sm font-bold font-body">Ledgera</span></div>
